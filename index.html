@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Mengganti font ke Oswald untuk estetika Emo/Rock yang tajam dan Inter untuk Body text -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -316,8 +316,9 @@
         .birthday-text-hidden { opacity: 0; transform: translateY(30px); transition: all 1.5s ease; }
         .birthday-text-visible { opacity: 1; transform: translateY(0); }
         
+        /* Main background confetti */
         canvas#confetti {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.6;
         }
 
         /* --- TAMBAHAN CSS GAME 3: FIND JOHNNY --- */
@@ -338,7 +339,7 @@
             opacity: 0.15; mix-blend-mode: overlay;
         }
         .g3-vignette {
-            position: absolute; inset: 0; pointer-events: none; z-index: 15;
+            position: absolute; inset: 0; pointer-events: none; z-index: 25; 
             box-shadow: inset 0 0 80px rgba(0,0,0,1);
         }
         .g3-obj {
@@ -346,15 +347,18 @@
             font-size: clamp(2rem, 5vw, 3rem);
             filter: grayscale(80%) brightness(40%) drop-shadow(0 5px 5px rgba(0,0,0,0.8));
             user-select: none; pointer-events: none;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .g3-obj:hover {
+            transform: scale(1.1) rotate(5deg) !important;
+            filter: grayscale(60%) brightness(60%);
         }
         .g3-johnny {
             position: absolute;
-            width: clamp(40px, 8vw, 65px);
             height: auto;
             cursor: pointer;
-            z-index: 20;
-            filter: brightness(70%) drop-shadow(0 5px 10px rgba(0,0,0,0.8));
-            transition: transform 0.2s;
+            filter: brightness(60%) drop-shadow(0 5px 10px rgba(0,0,0,0.8));
+            transition: transform 0.2s, filter 0.2s;
         }
         .g3-johnny:hover { transform: scale(1.1); filter: brightness(100%); }
         .miss-shake { animation: shakeError 0.3s cubic-bezier(.36,.07,.19,.97) both; box-shadow: inset 0 0 50px rgba(220, 38, 38, 0.4); }
@@ -373,7 +377,7 @@
             border-radius: 50%; z-index: 999; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: transform 0.3s, background 0.3s;
-            display: none; /* Disembunyikan sampai exhibition */
+            display: none; 
         }
         #global-music-toggle:hover { transform: scale(1.1); background: rgba(127,29,29,0.8); }
 
@@ -454,22 +458,20 @@
 
     <!-- Game 3: Find Johnny Joestar -->
     <section id="screen-game3" class="screen flex flex-col items-center justify-center bg-[#050505] w-full">
-        <div class="mb-2 md:mb-4 text-center w-full px-2 z-20">
+        <div class="mb-2 md:mb-4 text-center w-full px-2 z-30">
             <h2 class="body-text font-bold text-gray-500 tracking-widest uppercase mb-1" id="g3-subtitle">One more mission</h2>
             <h1 class="hero-title text-red-700 drop-shadow-md" id="g3-title">Find Johnny Joestar</h1>
             <p class="body-text text-gray-400 font-medium mt-1" id="g3-desc">He's somewhere in the desert.</p>
         </div>
 
-        <div class="emo-font text-gray-500 text-lg md:text-xl mb-2 z-20">LEVEL <span id="g3-level-text" class="text-red-600">1</span> / 3</div>
+        <div class="emo-font text-gray-500 text-lg md:text-xl mb-2 z-30">LEVEL <span id="g3-level-text" class="text-red-600">1</span> / 3</div>
 
         <div id="g3-arena-container" class="g3-arena w-[95%]" onclick="missJohnny(event)">
             <div class="desert-grain"></div>
             <div class="g3-vignette"></div>
-            <!-- Elemen Gurun & Johnny akan di-inject via JS -->
             <div id="g3-objects-layer" class="absolute inset-0 pointer-events-none"></div>
             
-            <!-- Overlay Transisi Level Game 3 -->
-            <div id="g3-overlay" class="game-overlay z-30">
+            <div id="g3-overlay" class="game-overlay z-40">
                 <h2 id="g3-result-title" class="hero-title mb-2 text-purple-500">You found him.</h2>
                 <p id="g3-result-msg" class="body-text text-gray-300 mb-6 text-xl">But he's not here anymore.</p>
                 <button id="g3-btn-next" class="btn btn-green emo-font" onclick="nextJohnnyLevel()">Continue ➡</button>
@@ -491,7 +493,7 @@
     <!-- Exhibition Screen -->
     <section id="screen-exhibition" class="screen bg-black relative w-full hidden-scrollbar">
         <!-- Confetti Background Layer -->
-        <canvas id="confetti" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+        <canvas id="confetti"></canvas>
 
         <!-- Headers -->
         <div class="w-full min-h-[90dvh] flex flex-col justify-center items-center text-center px-4 relative z-10">
@@ -504,37 +506,22 @@
         
         <!-- Gallery -->
         <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-24 md:gap-32 pb-12 z-10 relative">
-            <!-- Photo 1 -->
             <div class="flex flex-col md:flex-row items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
                 <div class="photo-frame" style="transform: rotate(-3deg);">
                     <img src="assets/images/1.webp" alt="Memory 1" onerror="this.src='https://placehold.co/300x400/27272a/71717a?text=photo-1.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
                 </div>
-                <!-- <div class="text-center md:text-left max-w-sm px-2">
-                    <p class="section-title text-purple-400 mb-2">[NAMA]</p>
-                    <p class="body-text text-gray-400 font-medium tracking-wider mb-3">[TANGGAL LAHIR]</p>
-                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
-                </div> -->
             </div>
 
-            <!-- Photo 2 (Reversed) -->
             <div class="flex flex-col md:flex-row-reverse items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
                 <div class="photo-frame landscape" style="transform: rotate(4deg);">
                     <img src="assets/images/2.webp" alt="Memory 2" onerror="this.src='https://placehold.co/400x300/27272a/71717a?text=photo-2.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
                 </div>
-                <!-- <div class="text-center md:text-right max-w-sm px-2">
-                    <p class="section-title text-red-600 mb-3">A chapter ends...</p>
-                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
-                </div> -->
             </div>
 
-            <!-- Photo 3 -->
             <div class="flex flex-col md:flex-row items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
                 <div class="photo-frame square" style="transform: rotate(-2deg);">
                     <img src="assets/images/3.webp" alt="Memory 3" onerror="this.src='https://placehold.co/350x350/27272a/71717a?text=photo-3.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
                 </div>
-                <!-- <div class="text-center md:text-left max-w-sm px-2 mt-2 md:mt-0">
-                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
-                </div> -->
             </div>
         </div>
 
@@ -568,11 +555,51 @@
                 You are the happiest, the most beautiful, the smartest—you’re everything to me.
             </p>
 
-            <div class="flex justify-center mt-10 fade-on-scroll">
-                <button class="btn emo-font text-sm" onclick="location.reload()">Replay Experience 🔄</button>
+            <!-- KOTAK HARAPAN (WISH INPUT) -->
+            <div id="wish-section" class="w-full mx-auto mt-10 fade-on-scroll bg-gray-900/60 p-6 md:p-10 rounded-xl border-2 border-red-900 shadow-[0_0_30px_rgba(153,27,27,0.4)] relative z-20">
+                <h3 class="section-title text-purple-400 mb-2 text-center" style="font-size: clamp(1.5rem, 5vw, 2.5rem);">Make a Wish</h3>
+                <p class="body-text text-gray-400 mb-6 text-center">Tuliskan harapan terbaikmu di usia yang ke-17 ini sebelum menutup malam.</p>
+                <textarea id="wish-input" class="w-full h-32 md:h-40 bg-black border-2 border-gray-700 rounded-lg p-4 text-gray-200 body-text focus:outline-none focus:border-red-600 transition-colors resize-none mb-6 shadow-inner" placeholder="Aku berharap di usia ini..."></textarea>
+                <div class="flex justify-center">
+                    <button class="btn btn-green emo-font" onclick="submitWish(event)">Tutup Matamu & Kirim Harapan 🎈</button>
+                </div>
+            </div>
+
+            <!-- TEKS SUKSES (Disembunyikan awalnya) -->
+            <div id="wish-success" class="w-full mx-auto mt-10 text-center hidden relative z-20">
+                <h3 class="hero-title text-green-500 drop-shadow-md mb-4" style="font-size: clamp(1.8rem, 5vw, 3rem);">Harapan Tersimpan.</h3>
+                <p class="body-text text-gray-300 italic text-xl">Semoga semesta mengaminkannya. 🖤</p>
+            </div>
+
+            <!-- TOMBOL REPLAY -->
+            <div class="flex justify-center mt-20 fade-on-scroll relative z-20">
+                <button class="btn emo-font text-sm bg-black border-gray-700 text-gray-400 hover:border-red-600" onclick="location.reload()">Replay Experience 🔄</button>
             </div>
         </div>
     </section>
+
+    <!-- OVERLAY KHUSUS PINATA & QUOTE -->
+    <div id="pinata-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm hidden opacity-0 transition-opacity duration-500">
+        <!-- Canvas khusus untuk ledakan pinata agar berada paling depan -->
+        <canvas id="burst-canvas" class="absolute inset-0 pointer-events-none z-10"></canvas>
+        
+        <!-- Animasi Pinata -->
+        <div id="pinata-container" class="relative z-20 flex flex-col items-center cursor-pointer group" onclick="breakPinata(event)">
+            <div class="h-40 w-1 bg-gray-500/50 mb-[-15px]"></div> <!-- Tali -->
+            <div id="the-pinata" class="animate-bounce group-hover:scale-110 transition-transform duration-200" style="filter: drop-shadow(0 0 20px rgba(126, 34, 206, 0.8));">
+                <img src="assets/images/pinata.png" alt="Pinata Custom" class="w-[120px] h-auto object-contain pointer-events-none">
+            </div>
+            <p id="pinata-hint" class="mt-8 body-text text-purple-300 font-bold tracking-widest uppercase animate-pulse text-xl">Pukul (Klik) Pinata Ini!</p>
+        </div>
+
+        <!-- Popup Quote -->
+        <div id="popup-message" class="hidden relative z-20 max-w-3xl text-center px-6 mt-10">
+            <p class="body-text text-gray-200 italic mb-8 drop-shadow-lg text-2xl md:text-4xl leading-relaxed" style="font-weight: 500;">
+                "jangan pernah mengecilkan jiwamu, jangan pernah meredupkan cahayamu dan jangan pernah berhenti menjadi puisi yang indah hanya karena ada seseorang yang tidak tahu cara membaca."
+            </p>
+            <button class="btn emo-font mt-6 bg-transparent border-gray-500 hover:border-purple-500" onclick="closePopup()">Simpan & Kembali</button>
+        </div>
+    </div>
 
     <!-- Global Audio & Music Toggle -->
     <audio id="bg-song-1" src="assets/audio/song-01.mp3" loop preload="auto"></audio>
@@ -603,7 +630,6 @@
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
                 
-                // Attack and release to avoid clicking sounds
                 gain.gain.setValueAtTime(0, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
                 gain.gain.setValueAtTime(vol, audioCtx.currentTime + duration - 0.05);
@@ -625,6 +651,7 @@
                 case 'bounce': playTone(200, 'sine', 0.1, 0.3); break;
                 case 'win': playTone(523.25, 'sine', 0.2); setTimeout(()=>playTone(659.25, 'sine', 0.2), 200); setTimeout(()=>playTone(783.99, 'sine', 0.4), 400); break;
                 case 'lose': playTone(300, 'sawtooth', 0.4); setTimeout(()=>playTone(250, 'sawtooth', 0.6), 400); break;
+                case 'burst': playTone(150, 'square', 0.2, 0.6); setTimeout(()=>playTone(800, 'sine', 0.3, 0.8), 50); setTimeout(()=>playTone(1200, 'sine', 0.5, 0.5), 150); break; // Suara pinata pecah lebih dramatis
             }
         }
 
@@ -636,31 +663,20 @@
         let g1Loop;
         let cWidth, cHeight;
         
-        // Konstanta Fisika
-        const GRAVITY = 0.35; // Lebih ringan (sebelumnya 0.4)
+        const GRAVITY = 0.35; 
         const FRICTION_GROUND = 0.95;
         const FRICTION_AIR = 0.99;
         const BOUNCE_DAMPING = 0.7;
-        const DRAG_MULTIPLIER = 0.25; // Tenaga lemparan ditambah drastis (sebelumnya 0.18)
-        const MAX_DRAG = 200; // Tarikan bisa lebih panjang ke belakang (sebelumnya 150)
+        const DRAG_MULTIPLIER = 0.25; 
+        const MAX_DRAG = 200; 
 
-        // State Game
         let score = 0;
-        let targetScore = 150; // Target diturunkan agar lebih mudah menang
-        let throwsLeft = 7; // Kesempatan lempar ditambah
+        let targetScore = 150; 
+        let throwsLeft = 7; 
         let isGame1Active = false;
 
-        // Entitas
-        let ball = {
-            x: 0, y: 0, r: 25, vx: 0, vy: 0, // Ukuran bola diperbesar (sebelumnya 20)
-            state: 'idle', // idle, dragging, flying
-            startX: 0, startY: 0, // Posisi awal drag
-            currX: 0, currY: 0  // Posisi kursor saat drag
-        };
-        let targets = [];
-        let particles = [];
-        let popups = []; // Skor melayang
-        let trails = []; // Efek motion trail
+        let ball = { x: 0, y: 0, r: 25, vx: 0, vy: 0, state: 'idle', startX: 0, startY: 0, currX: 0, currY: 0 };
+        let targets = [], particles = [], popups = [], trails = []; 
 
         function resizeCanvas() {
             const rect = container.getBoundingClientRect();
@@ -669,7 +685,6 @@
             cWidth = canvas.width;
             cHeight = canvas.height;
             
-            // Posisi awal bola agak di atas agar mudah ditarik ke bawah (Slingshot)
             if(ball.state === 'idle') {
                 ball.x = cWidth / 2;
                 ball.y = cHeight - 120;
@@ -680,31 +695,19 @@
 
         function initTargets() {
             targets = [];
-            // Target Kecil (Cepat, Poin Besar) - Emo Theme Colors
-            targets.push({ x: cWidth*0.2, y: cHeight*0.2, r: 15, points: 100, color: '#dc2626', speed: 2, dir: 1, type: 'small' }); // Crimson
-            // Target Sedang
-            targets.push({ x: cWidth*0.5, y: cHeight*0.4, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: -1, type: 'med' }); // Purple
-            targets.push({ x: cWidth*0.8, y: cHeight*0.3, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: 1, type: 'med' }); // Purple
-            // Target Besar (Lambat, Poin Kecil)
-            targets.push({ x: cWidth*0.3, y: cHeight*0.6, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: 1, type: 'large' }); // Dark Gray
-            targets.push({ x: cWidth*0.7, y: cHeight*0.7, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: -1, type: 'large' }); // Dark Gray
+            targets.push({ x: cWidth*0.2, y: cHeight*0.2, r: 15, points: 100, color: '#dc2626', speed: 2, dir: 1, type: 'small' });
+            targets.push({ x: cWidth*0.5, y: cHeight*0.4, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: -1, type: 'med' });
+            targets.push({ x: cWidth*0.8, y: cHeight*0.3, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: 1, type: 'med' }); 
+            targets.push({ x: cWidth*0.3, y: cHeight*0.6, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: 1, type: 'large' }); 
+            targets.push({ x: cWidth*0.7, y: cHeight*0.7, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: -1, type: 'large' });
         }
-
-        // function startGame1() {
-        //     initAudio();
-        //     switchScreen('screen-game1');
-        //     resetGame1();
-        // }
 
         function startGame1() {
             initAudio();
-
             playAudioWithFadeIn('bg-song-1');
-
             switchScreen('screen-game1');
             resetGame1();
         }
-
 
         function resetGame1() {
             document.getElementById('g1-overlay').classList.remove('active');
@@ -733,24 +736,17 @@
             document.getElementById('ui-score').innerText = score;
         }
 
-        // --- Input Handling ---
         function getMousePos(evt) {
             const rect = canvas.getBoundingClientRect();
-            // Handle touch or mouse
             let clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
             let clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
         function onPointerDown(e) {
             if (!isGame1Active || ball.state === 'flying') return;
             e.preventDefault();
-            
             const pos = getMousePos(e);
-            // Cek apakah klik di area bola (berikan toleransi area lebih besar sedikit untuk touch)
             const dx = pos.x - ball.x;
             const dy = pos.y - ball.y;
             if (Math.sqrt(dx*dx + dy*dy) < ball.r * 2) {
@@ -767,7 +763,6 @@
             e.preventDefault();
             const pos = getMousePos(e);
             
-            // Batasi panjang drag
             let dx = pos.x - ball.startX;
             let dy = pos.y - ball.startY;
             let dist = Math.sqrt(dx*dx + dy*dy);
@@ -785,11 +780,9 @@
             if (ball.state !== 'dragging') return;
             e.preventDefault();
             
-            // Hitung vector lemparan (kebalikan dari drag)
             let dx = ball.startX - ball.currX;
             let dy = ball.startY - ball.currY;
             
-            // Cegah lemparan terlalu lemah
             if (Math.sqrt(dx*dx + dy*dy) > 10) {
                 ball.vx = dx * DRAG_MULTIPLIER;
                 ball.vy = dy * DRAG_MULTIPLIER;
@@ -798,48 +791,38 @@
                 updateHUD();
                 playSound('shoot');
             } else {
-                // Batal lempar
                 ball.state = 'idle';
             }
         }
 
         canvas.addEventListener('mousedown', onPointerDown);
         canvas.addEventListener('mousemove', onPointerMove);
-        window.addEventListener('mouseup', onPointerUp); // Tangkap di window agar tidak stuck
-        
+        window.addEventListener('mouseup', onPointerUp); 
         canvas.addEventListener('touchstart', onPointerDown, {passive: false});
         canvas.addEventListener('touchmove', onPointerMove, {passive: false});
         window.addEventListener('touchend', onPointerUp);
 
-        // --- Main Game Loop 1 ---
         function loopGame1() {
             if (!isGame1Active) return;
-            
             updatePhysics();
             drawCanvas();
-            
             checkGameState();
-            
             g1Loop = requestAnimationFrame(loopGame1);
         }
 
         function updatePhysics() {
-            // Update Trails
             if(ball.state === 'flying') {
                 if(Math.random() > 0.3) {
                     trails.push({x: ball.x, y: ball.y, r: ball.r, alpha: 0.5});
                 }
             }
-            // Kurangi alpha trail
             for (let i = trails.length - 1; i >= 0; i--) {
                 trails[i].alpha -= 0.05;
                 if (trails[i].alpha <= 0) trails.splice(i, 1);
             }
 
-            // Gerakkan Target
             targets.forEach(t => {
                 t.x += t.speed * t.dir;
-                // Pantul target di dinding (dengan margin)
                 if(t.x < 50 || t.x > cWidth - 50) t.dir *= -1;
             });
 
@@ -853,12 +836,10 @@
 
                 let bounced = false;
 
-                // Wall Collisions
                 if (ball.x + ball.r > cWidth) { ball.x = cWidth - ball.r; ball.vx *= -BOUNCE_DAMPING; bounced = true; }
                 if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -BOUNCE_DAMPING; bounced = true; }
                 if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy *= -BOUNCE_DAMPING; bounced = true; }
                 
-                // Ground Collision
                 if (ball.y + ball.r > cHeight) {
                     ball.y = cHeight - ball.r;
                     ball.vy *= -BOUNCE_DAMPING;
@@ -868,7 +849,6 @@
 
                 if (bounced && Math.abs(ball.vy) > 2) playSound('bounce');
 
-                // Target Collisions
                 for (let i = targets.length - 1; i >= 0; i--) {
                     let t = targets[i];
                     let dx = ball.x - t.x;
@@ -876,13 +856,11 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     
                     if (dist < ball.r + t.r) {
-                        // Kena Target!
                         score += t.points;
                         updateHUD();
                         createParticles(t.x, t.y, t.color);
                         createPopup(t.x, t.y, `+${t.points}`);
                         
-                        // Efek suara & getaran
                         if(t.type === 'small') playSound('hit-small');
                         else if(t.type === 'med') playSound('hit-med');
                         else { 
@@ -891,38 +869,32 @@
                             setTimeout(() => container.classList.remove('shake-effect'), 400);
                         }
 
-                        // Pantulkan bola
                         let normalX = dx / dist;
                         let normalY = dy / dist;
                         let dot = ball.vx * normalX + ball.vy * normalY;
                         ball.vx -= 2 * dot * normalX;
                         ball.vy -= 2 * dot * normalY;
-                        ball.vx += (Math.random()-0.5) * 5; // Extra chaos
+                        ball.vx += (Math.random()-0.5) * 5; 
 
-                        targets.splice(i, 1); // Hapus target
+                        targets.splice(i, 1);
                     }
                 }
 
-                // Berhenti (mencegah micro-bouncing karena gravitasi terus ditambah)
                 if (Math.abs(ball.vx) < 0.5 && Math.abs(ball.vy) <= GRAVITY * 1.5 && ball.y + ball.r >= cHeight - 2) {
                     ball.state = 'idle';
-                    ball.vx = 0;
-                    ball.vy = 0;
-                    // Reset posisi agak ke atas lagi untuk lemparan berikutnya
+                    ball.vx = 0; ball.vy = 0;
                     ball.x = cWidth / 2;
                     ball.y = cHeight - 120;
                     trails = [];
                 }
             }
 
-            // Update Particles
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
                 if (p.alpha <= 0) particles.splice(i, 1);
             }
 
-            // Update Popups
             for (let i = popups.length - 1; i >= 0; i--) {
                 let p = popups[i];
                 p.y -= 1; p.alpha -= 0.02;
@@ -933,7 +905,6 @@
         function drawCanvas() {
             ctx.clearRect(0, 0, cWidth, cHeight);
 
-            // Gambar Trails (Abu-abu gelap ke merah)
             trails.forEach(t => {
                 ctx.beginPath();
                 ctx.arc(t.x, t.y, t.r * 0.8, 0, Math.PI * 2);
@@ -941,11 +912,9 @@
                 ctx.fill();
             });
 
-            // Gambar Target
             targets.forEach(t => {
                 ctx.beginPath();
                 ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
-                
                 let gradient = ctx.createRadialGradient(t.x, t.y, t.r*0.1, t.x, t.y, t.r);
                 gradient.addColorStop(0, '#52525b');
                 gradient.addColorStop(0.5, t.color);
@@ -953,14 +922,12 @@
                 ctx.fillStyle = gradient;
                 ctx.fill();
                 
-                // Cincin dalam
                 ctx.beginPath();
                 ctx.arc(t.x, t.y, t.r * 0.6, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(0,0,0,0.8)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
-                // Nilai
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold ' + (t.r*0.6) + 'px Permanent Marker';
                 ctx.textAlign = 'center';
@@ -968,24 +935,17 @@
                 ctx.fillText(t.points, t.x, t.y);
             });
 
-            // GAMBAR BOLA MENGGUNAKAN PNG
             ctx.save();
             ctx.translate(ball.x, ball.y);
-            // Rotasi jika bola terbang
             if(ball.state === 'flying') {
                 let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
                 ctx.rotate(Date.now() / 100 * speed * 0.1 * (ball.vx > 0 ? 1 : -1));
             }
 
-            // Ambil elemen gambar PNG
             const ballImg = document.getElementById('ball-img');
-            
-            // Cek apakah gambar berhasil dimuat. Jika ya, gambar PNG-nya.
             if(ballImg && ballImg.complete && ballImg.naturalWidth > 0) {
-                // Gambar menengahi koordinat x, y (yang sekarang menjadi 0,0 karena di-translate)
                 ctx.drawImage(ballImg, -ball.r, -ball.r, ball.r * 2, ball.r * 2);
             } else {
-                // Fallback (jika gambar gagal/belum dimuat) akan menggambar lingkaran merah gelap
                 ctx.beginPath();
                 ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
                 ctx.fillStyle = '#7f1d1d'; 
@@ -994,10 +954,8 @@
                 ctx.strokeStyle = '#000';
                 ctx.stroke();
             }
-
             ctx.restore();
 
-            // Gambar Trajectory / Garis Tarikan
             if (ball.state === 'dragging') {
                 let dx = ball.startX - ball.currX;
                 let dy = ball.startY - ball.currY;
@@ -1005,7 +963,7 @@
                 ctx.beginPath();
                 ctx.moveTo(ball.startX, ball.startY);
                 ctx.lineTo(ball.currX, ball.currY);
-                ctx.strokeStyle = 'rgba(153, 27, 27, 0.7)'; // Merah gelap
+                ctx.strokeStyle = 'rgba(153, 27, 27, 0.7)'; 
                 ctx.lineWidth = 4;
                 ctx.stroke();
 
@@ -1023,13 +981,12 @@
                     simY += simVy;
                     ctx.lineTo(simX, simY);
                 }
-                ctx.strokeStyle = 'rgba(126, 34, 206, 0.7)'; // Garis prediksi ungu
+                ctx.strokeStyle = 'rgba(126, 34, 206, 0.7)'; 
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
 
-            // Gambar Particles
             particles.forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -1039,9 +996,8 @@
             });
             ctx.globalAlpha = 1;
 
-            // Gambar Popups
             popups.forEach(p => {
-                ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`; // Ungu terang
+                ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`;
                 ctx.font = 'bold 24px Permanent Marker';
                 ctx.textAlign = 'center';
                 ctx.strokeStyle = `rgba(0, 0, 0, ${p.alpha})`;
@@ -1051,7 +1007,6 @@
             });
         }
 
-        // Helpers untuk visual efek Game 1
         function createParticles(x, y, color) {
             for(let i=0; i<15; i++) {
                 particles.push({
@@ -1064,18 +1019,12 @@
                 });
             }
         }
-        function createPopup(x, y, text) {
-            popups.push({ x: x, y: y, text: text, alpha: 1 });
-        }
+        function createPopup(x, y, text) { popups.push({ x: x, y: y, text: text, alpha: 1 }); }
 
         function checkGameState() {
-            // Cek kondisi menang/kalah hanya saat bola diam
             if (ball.state === 'idle') {
-                if (score >= targetScore) {
-                    endGame1(true);
-                } else if (throwsLeft <= 0) {
-                    endGame1(false);
-                }
+                if (score >= targetScore) endGame1(true);
+                else if (throwsLeft <= 0) endGame1(false);
             }
         }
 
@@ -1107,17 +1056,13 @@
         }
 
         // --- GAME 2: Horse Race ---
-        let selectedHorse = 0;
-        let horses = [];
-        let isRacing = false;
-        let g2Loop;
+        let selectedHorse = 0, horses = [], isRacing = false, g2Loop;
 
         function initGame2() {
             switchScreen('screen-game2');
             document.getElementById('g2-overlay').classList.remove('active');
             document.getElementById('g2-setup').classList.remove('hidden');
             
-            // Reset kuda
             for(let i=1; i<=4; i++) {
                 const h = document.getElementById(`horse-${i}`);
                 h.style.left = '5%';
@@ -1169,7 +1114,6 @@
 
         function runRace() {
             let positions = [5, 5, 5, 5];
-            // Kuda memiliki batas kecepatan (variasi)
             let baseSpeeds = [
                 Math.random()*0.2 + 0.1,
                 Math.random()*0.2 + 0.1,
@@ -1177,33 +1121,20 @@
                 Math.random()*0.2 + 0.1
             ];
             
-            // CHEAT HALUS: Memberikan sedikit kecepatan tambahan pada kuda pilihan pemain
-            // Agar peluang menang lebih besar (tidak bikin frustrasi)
-            if (selectedHorse >= 1 && selectedHorse <= 4) {
-                baseSpeeds[selectedHorse - 1] += 0.08; 
-            }
+            if (selectedHorse >= 1 && selectedHorse <= 4) baseSpeeds[selectedHorse - 1] += 0.08; 
             
-            const finishLine = 83; // persentase left css
-            
-            horses = [
-                document.getElementById('horse-1'),
-                document.getElementById('horse-2'),
-                document.getElementById('horse-3'),
-                document.getElementById('horse-4')
-            ];
-
+            const finishLine = 83; 
+            horses = [ document.getElementById('horse-1'), document.getElementById('horse-2'), document.getElementById('horse-3'), document.getElementById('horse-4') ];
             horses.forEach(h => h.classList.add('running'));
 
             function frame() {
                 if (!isRacing) return;
                 
-                // Debu acak
                 if (Math.random() < 0.3) createG2Dust(positions);
 
                 let winner = -1;
                 for (let i = 0; i < 4; i++) {
-                    // Dinamika kecepatan
-                    let currentSpeed = baseSpeeds[i] + (Math.random() * 0.15 - 0.05); // Kadang ngebut, kadang lambat
+                    let currentSpeed = baseSpeeds[i] + (Math.random() * 0.15 - 0.05); 
                     if (currentSpeed < 0.05) currentSpeed = 0.05;
                     
                     positions[i] += currentSpeed;
@@ -1215,11 +1146,8 @@
                     }
                 }
 
-                if (winner !== -1) {
-                    endRace(winner);
-                } else {
-                    g2Loop = requestAnimationFrame(frame);
-                }
+                if (winner !== -1) endRace(winner);
+                else g2Loop = requestAnimationFrame(frame);
             }
             g2Loop = requestAnimationFrame(frame);
         }
@@ -1233,12 +1161,9 @@
                 if(Math.random() > 0.7) {
                     const dust = document.createElement('div');
                     dust.className = 'dust-g2';
-                    
                     const laneRect = lanes[i].getBoundingClientRect();
-                    // Relatif terhadap track
                     dust.style.left = ((trackRect.width * positions[i] / 100) - 40) + 'px';
                     dust.style.top = ((laneRect.top - trackRect.top) + laneRect.height/2 + 10) + 'px';
-                    
                     track.appendChild(dust);
                     setTimeout(() => { if(dust.parentNode) dust.remove(); }, 600);
                 }
@@ -1261,7 +1186,6 @@
                 msgEl.className = "text-3xl font-bold mb-8 emo-font text-gray-300";
                 
                 actionBtn.innerText = "Continue ➡";
-                // DIUBAH: Melanjutkan ke Game 3 (Johnny) bukan langsung ke Code
                 actionBtn.onclick = startJohnnyGame; 
                 playSound('win');
             } else {
@@ -1273,25 +1197,13 @@
                 actionBtn.onclick = retryRace;
                 playSound('lose');
             }
-            
-            setTimeout(() => {
-                overlay.classList.add('active');
-            }, 500);
+            setTimeout(() => { overlay.classList.add('active'); }, 500);
         }
-
-        function retryRace() {
-            document.getElementById('g2-overlay').classList.remove('active');
-            initGame2(); // Mengulang ke pemilihan kuda
-        }
+        function retryRace() { document.getElementById('g2-overlay').classList.remove('active'); initGame2(); }
 
         // --- GAME 3: FIND JOHNNY JOESTAR ---
         let johnnyLevel = 1;
-        
-        function startJohnnyGame() {
-            johnnyLevel = 1;
-            switchScreen('screen-game3');
-            initJohnnyLevel();
-        }
+        function startJohnnyGame() { johnnyLevel = 1; switchScreen('screen-game3'); initJohnnyLevel(); }
 
         function initJohnnyLevel() {
             document.getElementById('g3-overlay').classList.remove('active');
@@ -1299,80 +1211,57 @@
             
             const objLayer = document.getElementById('g3-objects-layer');
             const arena = document.getElementById('g3-arena-container');
-            objLayer.innerHTML = ''; // Bersihkan arena
+            objLayer.innerHTML = ''; 
             
-            // Konfigurasi Level
-            let numFakeObjects = 10;
-            if (johnnyLevel === 2) numFakeObjects = 25;
-            if (johnnyLevel === 3) numFakeObjects = 45;
-
-            // Update Teks Instruksi
+            let numFakeObjects = 60;
+            let johnnyWidth = 'clamp(35px, 6vw, 55px)'; 
+            
             const title = document.getElementById('g3-title');
             const subtitle = document.getElementById('g3-subtitle');
             const desc = document.getElementById('g3-desc');
             
             if(johnnyLevel === 1) {
-                subtitle.innerText = "One more mission";
-                title.innerText = "Find Johnny Joestar";
-                desc.innerText = "He's somewhere in the desert.";
+                subtitle.innerText = "One more mission"; title.innerText = "Find Johnny Joestar"; desc.innerText = "He's somewhere in the desert.";
             } else if (johnnyLevel === 2) {
-                subtitle.innerText = "Deeper into the desert";
-                title.innerText = "He moved.";
-                desc.innerText = "Look closer.";
+                numFakeObjects = 120; johnnyWidth = 'clamp(25px, 4vw, 40px)'; subtitle.innerText = "Deeper into the desert"; title.innerText = "He moved."; desc.innerText = "Look closer, it's getting harder.";
             } else {
-                subtitle.innerText = "One last time";
-                title.innerText = "Find Johnny";
-                desc.innerText = "This is the final search.";
+                numFakeObjects = 250; johnnyWidth = 'clamp(15px, 2.5vw, 25px)'; subtitle.innerText = "One last time"; title.innerText = "Find Johnny"; desc.innerText = "This is the final search. Don't blink.";
             }
 
-            // Generate Fake Objects (Batu, Kaktus, Pasir)
-            const desertItems = ['🪨', '🌵', '🏜️', '🦴'];
-            for(let i=0; i<numFakeObjects; i++) {
+            const desertItems = ['🪨', '🌵', '🏜️', '🦴', '🦅', '🦂'];
+            for(let i = 0; i < numFakeObjects; i++) {
                 const el = document.createElement('div');
                 el.className = 'g3-obj';
                 el.innerText = desertItems[Math.floor(Math.random() * desertItems.length)];
-                
-                // Posisi Acak
                 el.style.left = (Math.random() * 85) + '%';
                 el.style.top = (Math.random() * 80) + '%';
-                
-                // Variasi Ukuran & Rotasi
-                const scale = (Math.random() * 0.5) + 0.5;
-                const rot = (Math.random() * 40) - 20;
+                const scale = (Math.random() * 0.7) + 0.4;
+                const rot = (Math.random() * 60) - 30;
                 el.style.transform = `scale(${scale}) rotate(${rot}deg)`;
-                
+                el.style.zIndex = Math.floor(Math.random() * 20); 
                 objLayer.appendChild(el);
             }
 
-            // Spawn Johnny
             const johnny = document.createElement('img');
             johnny.className = 'g3-johnny';
-            // PERBAIKAN: Typo 'ohnny' diubah jadi 'johnny' dan menghapus slash (/) di awal path
             johnny.src = `assets/images/j-${johnnyLevel}.png`;
             johnny.alt = "Johnny Joestar";
             johnny.onerror = function() { this.src = `https://placehold.co/60x60/27272a/7e22ce.png?text=JOHNNY+${johnnyLevel}`; };
-            
-            // Posisi Johnny
+            johnny.style.width = johnnyWidth; 
             johnny.style.left = (Math.random() * 85 + 5) + '%';
             johnny.style.top = (Math.random() * 80 + 5) + '%';
+            johnny.style.zIndex = Math.floor(Math.random() * 10) + 5; 
             
-            // Tambahkan event click spesifik untuk Johnny
-            johnny.onclick = function(e) {
-                e.stopPropagation(); // Cegah event klik tembus ke arena (miss)
-                foundJohnny();
-            };
-            
-            // Sisipkan Johnny secara acak di antara objek lain (di dalam DOM)
+            johnny.onclick = function(e) { e.stopPropagation(); foundJohnny(); };
             arena.appendChild(johnny);
         }
 
         function missJohnny(e) {
-            // Animasi visual feedback jika salah klik area
             const arena = document.getElementById('g3-arena-container');
             arena.classList.remove('miss-shake');
-            void arena.offsetWidth; // Trigger reflow
+            void arena.offsetWidth; 
             arena.classList.add('miss-shake');
-            playTone(200, 'sawtooth', 0.1, 0.2); // Efek suara error kecil
+            playTone(200, 'sawtooth', 0.1, 0.2); 
         }
 
         function foundJohnny() {
@@ -1383,62 +1272,28 @@
             const btnEl = document.getElementById('g3-btn-next');
             
             if (johnnyLevel < 3) {
-                titleEl.innerText = "You found him.";
-                titleEl.className = "hero-title mb-2 text-purple-500 drop-shadow-md";
-                msgEl.innerText = "But he's not here anymore.";
-                btnEl.innerText = "Continue ➡";
+                titleEl.innerText = "You found him."; titleEl.className = "hero-title mb-2 text-purple-500 drop-shadow-md"; msgEl.innerText = "But he's not here anymore."; btnEl.innerText = "Continue ➡";
             } else {
-                titleEl.innerText = "Mission Complete.";
-                titleEl.className = "hero-title mb-2 text-green-500 drop-shadow-md";
-                msgEl.innerText = "You finally caught him.";
-                btnEl.innerText = "Enter The Gate ➡";
+                titleEl.innerText = "Mission Complete."; titleEl.className = "hero-title mb-2 text-green-500 drop-shadow-md"; msgEl.innerText = "You finally caught him."; btnEl.innerText = "Enter The Gate ➡";
             }
-            
             overlay.classList.add('active');
         }
 
         function nextJohnnyLevel() {
-            // Bersihkan elemen Johnny sebelumnya agar tidak tertumpuk
             const oldJohnny = document.querySelector('.g3-johnny');
             if(oldJohnny) oldJohnny.remove();
-
-            if (johnnyLevel < 3) {
-                johnnyLevel++;
-                initJohnnyLevel();
-            } else {
-                startCodeScreen();
-            }
+            if (johnnyLevel < 3) { johnnyLevel++; initJohnnyLevel(); } 
+            else { startCodeScreen(); }
         }
 
-        // --- Alur Baru: Code, Music & Exhibition ---
-        // function startCodeScreen() {
-        //     switchScreen('screen-code');
-        //     playTone(300, 'sine', 0.5);
-        //     // Reset input form
-        //     document.getElementById('bday-code-input').value = '';
-        //     document.getElementById('bday-code-input').style.borderColor = '#7f1d1d';
-        //     document.getElementById('bday-code-input').style.color = 'white';
-        //     document.getElementById('code-error').style.opacity = '0';
-            
-        //     // Start lagu pertama saat masuk ke halaman password
-        //     playAudioWithFadeIn('bg-song-1');
-        // }
-
-function startCodeScreen() {
-    switchScreen('screen-code');
-    playTone(300, 'sine', 0.5);
-
-    // Reset input form
-    document.getElementById('bday-code-input').value = '';
-    document.getElementById('bday-code-input').style.borderColor = '#7f1d1d';
-    document.getElementById('bday-code-input').style.color = 'white';
-    document.getElementById('code-error').style.opacity = '0';
-
-    // song-01.mp3 tetap berjalan
-    // Tidak perlu playAudioWithFadeIn() lagi di sini
-}
-
-
+        function startCodeScreen() {
+            switchScreen('screen-code');
+            playTone(300, 'sine', 0.5);
+            document.getElementById('bday-code-input').value = '';
+            document.getElementById('bday-code-input').style.borderColor = '#7f1d1d';
+            document.getElementById('bday-code-input').style.color = 'white';
+            document.getElementById('code-error').style.opacity = '0';
+        }
 
         function verifyCode() {
             const input = document.getElementById('bday-code-input').value.trim();
@@ -1447,25 +1302,78 @@ function startCodeScreen() {
             if (input === '28-10-2009') {
                 errorEl.style.opacity = '0';
                 playSound('win');
-                
-                // Efek sukses pada input
                 document.getElementById('bday-code-input').style.borderColor = '#22c55e';
                 document.getElementById('bday-code-input').style.color = '#22c55e';
-                
-                // Pindah musik secara halus ke lagu kedua
                 crossfadeAudio('bg-song-1', 'bg-song-2');
-                
-                setTimeout(() => {
-                    startExhibition();
-                }, 1000);
+                setTimeout(() => { startExhibition(); }, 1000);
             } else {
                 playSound('lose');
                 errorEl.style.opacity = '1';
-                // Getar input
                 const inputEl = document.getElementById('bday-code-input');
                 inputEl.classList.add('shake-effect');
                 setTimeout(() => inputEl.classList.remove('shake-effect'), 400);
             }
+        }
+
+        // --- SISTEM HARAPAN & PINATA OVERLAY ---
+        function submitWish(e) {
+            const textArea = document.getElementById('wish-input');
+            const wishVal = textArea.value.trim();
+
+            if(!wishVal) {
+                textArea.classList.add('shake-effect');
+                setTimeout(()=>textArea.classList.remove('shake-effect'), 400);
+                playSound('lose');
+                return;
+            }
+
+            // Memunculkan pop-up / overlay pinata
+            const overlay = document.getElementById('pinata-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 50);
+
+            // Mereset posisi dan bentuk pinata (jika sudah di replay)
+            document.getElementById('pinata-container').classList.remove('hidden');
+            document.getElementById('popup-message').classList.add('hidden');
+            const pinata = document.getElementById('the-pinata');
+            pinata.style.transform = 'scale(1)';
+            pinata.style.opacity = '1';
+            document.getElementById('pinata-hint').classList.remove('hidden');
+            
+            // Menyembunyikan form di layar belakang dan menggantinya dengan ucapan sukses
+            document.getElementById('wish-section').classList.add('hidden');
+            document.getElementById('wish-success').classList.remove('hidden');
+        }
+
+        // Fungsi saat pinata diklik
+        function breakPinata(e) {
+            playSound('burst'); 
+            
+            const pinata = document.getElementById('the-pinata');
+            const hint = document.getElementById('pinata-hint');
+            
+            // Animasi hancur (tambah besar lalu transparan)
+            pinata.style.transform = 'scale(2.5) rotate(20deg)';
+            pinata.style.opacity = '0';
+            hint.classList.add('hidden');
+            
+            // Trigger Confetti Ledakan di layer khusus (Burst Canvas)
+            triggerBurst(e.clientX, e.clientY);
+
+            // Memunculkan Teks / Quote
+            setTimeout(() => {
+                document.getElementById('pinata-container').classList.add('hidden');
+                document.getElementById('popup-message').classList.remove('hidden');
+            }, 300);
+        }
+
+        function closePopup() {
+            const overlay = document.getElementById('pinata-overlay');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                burstParticles = []; // Membersihkan sisa partikel ledakan
+            }, 500);
         }
 
         let isMainMusicPlaying = false;
@@ -1476,7 +1384,7 @@ function startCodeScreen() {
             if(!audio) return;
             
             activeAudioId = audioId;
-            audio.volume = 0; // Mulai dari 0 untuk efek fade
+            audio.volume = 0; 
             
             const musicBtn = document.getElementById('global-music-toggle');
             musicBtn.style.display = 'block';
@@ -1487,20 +1395,14 @@ function startCodeScreen() {
                     isMainMusicPlaying = true;
                     musicBtn.innerHTML = '🔊';
                     
-                    // Fade In perlahan
                     let vol = 0;
                     const fadeIn = setInterval(() => {
                         vol += 0.05;
-                        if (vol >= 0.6) {
-                            clearInterval(fadeIn);
-                            audio.volume = 0.6; // Batas volume maksimal 0.6
-                        } else {
-                            audio.volume = vol;
-                        }
+                        if (vol >= 0.6) { clearInterval(fadeIn); audio.volume = 0.6; } 
+                        else { audio.volume = vol; }
                     }, 100);
                 }).catch(error => {
-                    isMainMusicPlaying = false;
-                    musicBtn.innerHTML = '🔇';
+                    isMainMusicPlaying = false; musicBtn.innerHTML = '🔇';
                 });
             }
         }
@@ -1512,22 +1414,15 @@ function startCodeScreen() {
 
             const musicBtn = document.getElementById('global-music-toggle');
 
-            // Fade out lagu pertama dan hentikan
             if(oldAudio) {
                 let oldVol = oldAudio.volume;
                 const fadeOut = setInterval(() => {
                     oldVol -= 0.05;
-                    if(oldVol <= 0) {
-                        clearInterval(fadeOut);
-                        oldAudio.pause();
-                        oldAudio.currentTime = 0;
-                    } else {
-                        oldAudio.volume = oldVol;
-                    }
+                    if(oldVol <= 0) { clearInterval(fadeOut); oldAudio.pause(); oldAudio.currentTime = 0; } 
+                    else { oldAudio.volume = oldVol; }
                 }, 80);
             }
 
-            // Langsung mainkan dan fade in lagu kedua karena sudah ada user action
             if(newAudio) {
                 newAudio.volume = 0;
                 let playPromise = newAudio.play();
@@ -1538,16 +1433,11 @@ function startCodeScreen() {
                         let newVol = 0;
                         const fadeIn = setInterval(() => {
                             newVol += 0.05;
-                            if(newVol >= 0.6) {
-                                clearInterval(fadeIn);
-                                newAudio.volume = 0.6;
-                            } else {
-                                newAudio.volume = newVol;
-                            }
+                            if(newVol >= 0.6) { clearInterval(fadeIn); newAudio.volume = 0.6; } 
+                            else { newAudio.volume = newVol; }
                         }, 80);
                     }).catch(error => {
-                        isMainMusicPlaying = false;
-                        musicBtn.innerHTML = '🔇';
+                        isMainMusicPlaying = false; musicBtn.innerHTML = '🔇';
                     });
                 }
             }
@@ -1555,25 +1445,15 @@ function startCodeScreen() {
 
         function startExhibition() {
             switchScreen('screen-exhibition');
-            
-            // Musik (song-02.mp3) sudah ditangani dan dimainkan melalui crossfadeAudio 
-            // sehingga tidak akan terputus ketika transisi layar.
-            
-            // Mulai Confetti terus menerus
-            startConfetti();
+            startMainConfetti();
 
-            // Inisialisasi efek animasi scroll
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.fade-on-scroll').forEach(el => {
-                observer.observe(el);
-            });
+            document.querySelectorAll('.fade-on-scroll').forEach(el => { observer.observe(el); });
         }
 
         function toggleMainMusic() {
@@ -1581,18 +1461,11 @@ function startCodeScreen() {
             const audio = document.getElementById(activeAudioId);
             const btn = document.getElementById('global-music-toggle');
             
-            if (isMainMusicPlaying) {
-                audio.pause();
-                btn.innerHTML = '🔇';
-                isMainMusicPlaying = false;
-            } else {
-                audio.play();
-                btn.innerHTML = '🔊';
-                isMainMusicPlaying = true;
-            }
+            if (isMainMusicPlaying) { audio.pause(); btn.innerHTML = '🔇'; isMainMusicPlaying = false; } 
+            else { audio.play(); btn.innerHTML = '🔊'; isMainMusicPlaying = true; }
         }
 
-        // --- Confetti ---
+        // --- Main Background Confetti Engine ---
         const confCanvas = document.getElementById('confetti');
         const confCtx = confCanvas.getContext('2d');
         let confParticles = [];
@@ -1605,12 +1478,10 @@ function startCodeScreen() {
         window.addEventListener('resize', resizeConfetti);
         resizeConfetti();
 
-        function startConfetti() {
+        function startMainConfetti() {
             confettiActive = true;
-            // Emo Colors Array: Hitam, Abu-abu gelap, Merah Darah, Ungu Tua, Silver
             const emoColors = ['#000000', '#27272a', '#991b1b', '#7e22ce', '#a1a1aa', '#581c87'];
             
-            // Turunkan jumlah particle agar tidak memberatkan browser saat scroll
             for(let i=0; i<80; i++) {
                 confParticles.push({
                     x: Math.random() * confCanvas.width,
@@ -1618,21 +1489,22 @@ function startCodeScreen() {
                     r: Math.random() * 6 + 4,
                     dx: Math.random() * 2 - 1,
                     dy: Math.random() * 3 + 1,
-                    color: emoColors[Math.floor(Math.random() * emoColors.length)], // Pilih warna emo secara acak
+                    color: emoColors[Math.floor(Math.random() * emoColors.length)], 
                     tilt: Math.random() * 10,
                     tiltAngle: 0,
                     tiltAngleInc: (Math.random() * 0.07) + 0.05
                 });
             }
-            animateConfetti();
+            animateMainConfetti();
         }
 
-        function animateConfetti() {
+        function animateMainConfetti() {
             if(!confettiActive) return;
-            requestAnimationFrame(animateConfetti);
+            requestAnimationFrame(animateMainConfetti);
             confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
             
-            confParticles.forEach((p, index) => {
+            for (let i = confParticles.length - 1; i >= 0; i--) {
+                let p = confParticles[i];
                 p.tiltAngle += p.tiltAngleInc;
                 p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2 + p.dy;
                 p.x += Math.sin(p.tiltAngle) * 2;
@@ -1645,14 +1517,84 @@ function startCodeScreen() {
                 confCtx.stroke();
 
                 if (p.y > confCanvas.height) {
-                    confParticles[index] = {
+                    confParticles[i] = {
                         ...p,
                         x: Math.random() * confCanvas.width,
                         y: -20,
                         tilt: Math.floor(Math.random() * 10) - 10
                     };
                 }
-            });
+            }
+        }
+
+        // --- BURST PINATA CONFETTI ENGINE (Overlay Khusus) ---
+        const burstCanvas = document.getElementById('burst-canvas');
+        const burstCtx = burstCanvas.getContext('2d');
+        let burstParticles = [];
+        let burstActive = false;
+
+        function resizeBurst() {
+            burstCanvas.width = window.innerWidth;
+            burstCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBurst);
+        resizeBurst();
+
+        function triggerBurst(x, y) {
+            burstActive = true;
+            // Warna-warni meriah seperti isi pinata permen!
+            const burstColors = ['#dc2626', '#7e22ce', '#3b82f6', '#10b981', '#f59e0b', '#ffffff', '#eab308', '#ec4899'];
+            
+            for(let i=0; i<250; i++) {
+                burstParticles.push({
+                    x: x,
+                    y: y,
+                    r: Math.random() * 8 + 4,
+                    dx: (Math.random() - 0.5) * 70, // Ledakan lebar ke samping
+                    dy: (Math.random() - 1) * 50,   // Ledakan keras ke atas
+                    color: burstColors[Math.floor(Math.random() * burstColors.length)],
+                    tilt: Math.random() * 10,
+                    tiltAngle: 0,
+                    tiltAngleInc: (Math.random() * 0.3) + 0.1
+                });
+            }
+            animateBurst();
+        }
+
+        function animateBurst() {
+            if(!burstActive) return;
+            
+            burstCtx.clearRect(0, 0, burstCanvas.width, burstCanvas.height);
+            let activeCount = 0;
+            
+            for (let i = burstParticles.length - 1; i >= 0; i--) {
+                let p = burstParticles[i];
+                
+                p.dy += 1.2; // Gaya tarik gravitasi kuat
+                p.dx *= 0.94; // Gaya gesek udara (memperlambat lemparan samping)
+                p.x += p.dx;
+                p.y += p.dy;
+                p.tiltAngle += p.tiltAngleInc;
+                
+                burstCtx.beginPath();
+                burstCtx.lineWidth = p.r;
+                burstCtx.strokeStyle = p.color;
+                burstCtx.moveTo(p.x + p.tilt + p.r, p.y);
+                burstCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                burstCtx.stroke();
+
+                if (p.y > burstCanvas.height) {
+                    burstParticles.splice(i, 1);
+                } else {
+                    activeCount++;
+                }
+            }
+            
+            if (activeCount > 0) {
+                requestAnimationFrame(animateBurst);
+            } else {
+                burstActive = false; // Berhenti kalau particle sudah habis jatuh
+            }
         }
     </script>
 </body>
