@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Mengganti font ke Oswald untuk estetika Emo/Rock yang tajam dan Inter untuk Body text -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a; /* Latar belakang gelap (Emo) */
+            --primary: #991b1b;  /* Merah gelap */
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            width: 100%;
+            height: 100vh; /* Fallback untuk browser lawas */
+            height: 100dvh; /* Dynamic viewport, fix masalah UI browser mobile */
+            overflow: hidden; /* Kunci scrolling body secara absolut */
+            user-select: none;
+            color: #e2e8f0;
+            position: relative;
+        }
+
+        /* --- TYPOGRAPHY HIERARCHY --- */
+        .emo-font, .hero-title, .section-title {
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .hero-title {
+            /* Dinamis: Sangat besar di desktop, menyesuaikan di mobile tanpa terpotong */
+            font-size: clamp(2.5rem, 10vw, 5.5rem);
+            line-height: 1.1;
+            font-weight: 700;
+        }
+        
+        .section-title {
+            font-size: clamp(1.75rem, 6vw, 3.5rem);
+            line-height: 1.2;
+            font-weight: 700;
+        }
+        
+        .body-text {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.9rem, 3vw, 1.15rem);
+            line-height: 1.6;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%; /* Menyesuaikan body 100dvh */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden; /* Menghilangkan elemen non-aktif dari kalkulasi tinggi browser */
+            transition: opacity 0.8s ease-in-out, visibility 0s linear 0.8s;
+            z-index: 10;
+            padding: 1rem;
+            overflow: hidden; /* Mencegah screen statis agar tidak meluber (overflow) */
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            transition: opacity 0.8s ease-in-out, visibility 0s linear 0s;
+        }
+
+        /* Khusus game screen untuk mencegah browser gesture default (scroll/refresh) saat main */
+        #screen-game1, #screen-game2 {
+            touch-action: none;
+        }
+
+        /* Tombol Umum */
+        .btn {
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            color: #d1d5db;
+            padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 28px);
+            border-radius: 8px;
+            font-size: clamp(1rem, 3vw, 1.25rem);
+            box-shadow: 0 4px 14px 0 rgba(153, 27, 27, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 1px solid #b91c1c;
+            outline: none;
+            max-width: 90vw; /* Mencegah tombol melebihi layar hp */
+            text-align: center;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(153, 27, 27, 0.6); color: white; }
+        .btn:active { transform: translateY(1px); }
+        .btn-green { background: linear-gradient(135deg, #581c87, #7e22ce); box-shadow: 0 4px 14px 0 rgba(126, 34, 206, 0.4); border-color: #9333ea; }
+
+        /* Game 1: Lempar Bola Canvas */
+        #game1-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: clamp(350px, 60vh, 600px); /* Menjaga ukuran arena tetap proporsional */
+            background: radial-gradient(circle at top, #334155, #0f172a);
+            border: clamp(3px, 1vw, 6px) solid #450a0a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+            margin: 0 auto;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .g1-hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            flex-wrap: wrap; /* Mencegah skor bertumpuk di layar kecil */
+            gap: 5px;
+        }
+        .hud-box {
+            font-size: clamp(0.85rem, 3vw, 1.25rem);
+            padding: 4px 12px;
+        }
+        
+        .shake-effect {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 2px, 0); }
+            20%, 80% { transform: translate3d(4px, -2px, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 4px, 0); }
+            40%, 60% { transform: translate3d(6px, -4px, 0); }
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            padding: 1rem;
+            text-align: center;
+        }
+        .game-overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Game 2: Balapan Kuda */
+        .track {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: clamp(220px, 40vh, 350px); /* Adaptif untuk mobile landscape/portrait */
+            background-color: #27272a;
+            border: clamp(4px, 1.5vw, 8px) solid #18181b;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin: 0 auto;
+        }
+        .track::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 10px;
+            background: repeating-linear-gradient(90deg, #000, #000 20px, #7f1d1d 20px, #7f1d1d 40px);
+        }
+        .lane {
+            position: relative;
+            width: 100%;
+            height: 22%;
+            border-bottom: 2px dashed rgba(255,0,0,0.2);
+            display: flex;
+            align-items: center;
+        }
+        .start-line {
+            position: absolute; left: 10%; top: 0; bottom: 0; width: 6px; background: #991b1b; z-index: 10;
+        }
+        .finish-line {
+            position: absolute; right: 10%; top: 0; bottom: 0; width: clamp(15px, 4vw, 30px); 
+            background: repeating-linear-gradient(45deg, #000, #000 10px, #991b1b 10px, #991b1b 20px);
+            z-index: 10;
+        }
+        .horse {
+            position: absolute;
+            left: 5%;
+            font-size: clamp(2rem, 6vw, 3rem); /* Kuda mengecil di HP agar tidak nabrak */
+            transform: translateX(-50%);
+            z-index: 20;
+            transition: left 0.1s linear, transform 0.1s;
+        }
+        .horse.running { animation: bobbing 0.3s infinite alternate; }
+        @keyframes bobbing {
+            from { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+            to { transform: translateX(-50%) translateY(-5px) rotate(2deg); }
+        }
+        .dust-g2 {
+            position: absolute;
+            width: clamp(8px, 2vw, 15px); height: clamp(8px, 2vw, 15px);
+            background: rgba(100, 100, 100, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: dustFade 0.6s forwards;
+            z-index: 15;
+        }
+        @keyframes dustFade {
+            0% { transform: scale(1) translateY(0); opacity: 0.8; }
+            100% { transform: scale(3) translateY(-15px) translateX(-10px); opacity: 0; }
+        }
+
+        .horse-select-btn {
+            background: #18181b; border: 2px solid #3f3f46; 
+            padding: clamp(8px, 2vw, 15px); 
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: white;
+            font-size: clamp(1.5rem, 5vw, 2.25rem);
+        }
+        .horse-select-btn:hover { border-color: #7f1d1d; transform: translateY(-2px); }
+        .horse-select-btn.selected { border-color: #dc2626; background: #27272a; transform: scale(1.1); box-shadow: 0 10px 15px rgba(220, 38, 38, 0.4); }
+
+        #countdown {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(5rem, 15vw, 8rem);
+            color: #dc2626;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #000;
+            z-index: 50;
+        }
+
+        /* Birthday Code Input */
+        #bday-code-input {
+            width: 100%;
+            max-width: 320px;
+            font-size: clamp(1.25rem, 4vw, 1.5rem);
+        }
+
+        /* Exhibition Screen */
+        #screen-exhibition {
+            overflow-y: auto; /* Hanya screen ini yang boleh di-scroll */
+            overflow-x: hidden;
+            justify-content: flex-start;
+            padding: 0;
+            -webkit-overflow-scrolling: touch; /* Efek momentum scroll yang halus di iOS */
+            touch-action: pan-y; /* Izinkan vertical scrolling spesifik di sini */
+        }
+        .hidden-scrollbar::-webkit-scrollbar { display: none; }
+        .hidden-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .photo-frame {
+            border: clamp(4px, 1.5vw, 8px) solid #18181b;
+            padding: clamp(6px, 2vw, 10px);
+            background: #27272a;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.4s ease, border-color 0.4s;
+            width: 100%;
+            max-width: 280px; /* Batasi lebar maksimal di HP agar tidak keluar layar */
+            margin: 0 auto;
+        }
+        .photo-frame img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3/4; /* Menjaga frame tetap rapi meski gambar berbeda ukuran */
+            object-fit: cover;
+        }
+        .photo-frame.landscape img {
+            aspect-ratio: 4/3;
+        }
+        .photo-frame.square img {
+            aspect-ratio: 1/1;
+        }
+        .photo-frame:hover {
+            transform: scale(1.05) rotate(0deg) !important;
+            border-color: #7f1d1d;
+        }
+        .fade-on-scroll {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+        .fade-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Birthday Screen */
+        #screen-birthday {
+            background: radial-gradient(circle at center, #1e1b4b, #000000);
+            color: #e5e7eb;
+            padding: 1rem;
+        }
+        .birthday-text-hidden { opacity: 0; transform: translateY(30px); transition: all 1.5s ease; }
+        .birthday-text-visible { opacity: 1; transform: translateY(0); }
+        
+        canvas#confetti {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;
+        }
+
+        /* --- TAMBAHAN CSS GAME 3: FIND JOHNNY --- */
+        .g3-arena {
+            position: relative;
+            width: 100%;
+            height: clamp(350px, 60vh, 500px);
+            background: radial-gradient(circle at bottom, #292524, #0c0a09);
+            border: clamp(3px, 1vw, 6px) solid #1c1917;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 0 10px 30px rgba(0,0,0,0.7);
+            margin: 0 auto;
+        }
+        .desert-grain {
+            position: absolute; inset: 0; pointer-events: none; z-index: 10;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.15; mix-blend-mode: overlay;
+        }
+        .g3-vignette {
+            position: absolute; inset: 0; pointer-events: none; z-index: 15;
+            box-shadow: inset 0 0 80px rgba(0,0,0,1);
+        }
+        .g3-obj {
+            position: absolute;
+            font-size: clamp(2rem, 5vw, 3rem);
+            filter: grayscale(80%) brightness(40%) drop-shadow(0 5px 5px rgba(0,0,0,0.8));
+            user-select: none; pointer-events: none;
+        }
+        .g3-johnny {
+            position: absolute;
+            width: clamp(40px, 8vw, 65px);
+            height: auto;
+            cursor: pointer;
+            z-index: 20;
+            filter: brightness(70%) drop-shadow(0 5px 10px rgba(0,0,0,0.8));
+            transition: transform 0.2s;
+        }
+        .g3-johnny:hover { transform: scale(1.1); filter: brightness(100%); }
+        .miss-shake { animation: shakeError 0.3s cubic-bezier(.36,.07,.19,.97) both; box-shadow: inset 0 0 50px rgba(220, 38, 38, 0.4); }
+        @keyframes shakeError {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        /* Floating Music Button Global */
+        #global-music-toggle {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            border: 1px solid #7f1d1d; padding: 10px 14px;
+            border-radius: 50%; z-index: 999; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s, background 0.3s;
+            display: none; /* Disembunyikan sampai exhibition */
+        }
+        #global-music-toggle:hover { transform: scale(1.1); background: rgba(127,29,29,0.8); }
+
+    </style>
+</head>
+<body>
+
+    <!-- GAMBAR BOLA PNG (Tersembunyi) -->
+    <img id="ball-img" src="assets/images/bola.png" style="display:none;" crossorigin="anonymous" alt="Ball Texture">
+
+    <!-- Intro Screen -->
+    <section id="screen-intro" class="screen active text-center px-4 w-full">
+        <h1 class="hero-title mb-4 text-red-600 drop-shadow-lg">Ada sesuatu untukmu...</h1>
+        <p class="body-text text-gray-400 mb-10 font-medium">Tapi kamu harus menyelesaikan kegelapan ini dulu.</p>
+        <button class="btn emo-font" onclick="startGame1()">Terima Tantangan</button>
+    </section>
+
+    <!-- Game 1: Target Practice -->
+    <section id="screen-game1" class="screen flex flex-col items-center justify-center w-full">
+        <div class="mb-2 md:mb-4 text-center w-full">
+            <h2 class="section-title text-gray-200">Target Practice</h2>
+            <p class="body-text text-gray-400 font-medium mt-1">Tarik bola ke bawah, arahkan, dan hancurkan targetnya!</p>
+        </div>
+        
+        <div id="game1-container" class="w-[95%]">
+            <div class="g1-hud emo-font tracking-wider">
+                <div class="text-gray-200 hud-box bg-black/50 border border-gray-700 rounded">Throws: <span id="ui-throws" class="text-red-500">7</span></div>
+                <div class="text-gray-200 hud-box bg-black/50 border border-gray-700 rounded">Score: <span id="ui-score" class="text-purple-400">0</span> / 150</div>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- Overlay Menang/Kalah -->
+            <div id="g1-overlay" class="game-overlay">
+                <h2 id="g1-result-title" class="hero-title mb-2"></h2>
+                <p id="g1-result-msg" class="body-text text-gray-300 mb-6"></p>
+                <button id="g1-btn-next" class="btn btn-green emo-font hidden" onclick="initGame2()">Continue ➡</button>
+                <button id="g1-btn-retry" class="btn emo-font hidden" onclick="resetGame1()">Bangkit Lagi 🔄</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game 2: Horse Race -->
+    <section id="screen-game2" class="screen flex flex-col items-center justify-center bg-black w-full">
+        <div class="text-center mb-4 md:mb-6 w-full px-2">
+            <h2 class="body-text font-bold text-gray-500 tracking-widest uppercase mb-1">Level 2</h2>
+            <h1 class="hero-title text-red-600 drop-shadow-md">The Final Run</h1>
+        </div>
+        
+        <div id="g2-setup" class="text-center mb-6 z-30 w-full px-2">
+            <p class="body-text text-gray-300 font-semibold mb-4">Pilih petarungmu sebelum balapan dimulai:</p>
+            <div class="flex flex-wrap gap-2 md:gap-4 justify-center mb-6">
+                <button class="horse-select-btn emo-font" onclick="selectHorse(1)">1️⃣🐎</button>
+                <button class="horse-select-btn emo-font" onclick="selectHorse(2)">2️⃣🐎</button>
+                <button class="horse-select-btn emo-font" onclick="selectHorse(3)">3️⃣🐎</button>
+                <button class="horse-select-btn emo-font" onclick="selectHorse(4)">4️⃣🐎</button>
+            </div>
+            <button id="btn-start-race" class="btn btn-green emo-font hidden w-[90%] md:w-auto" onclick="startRace()">Mulai Balapan!</button>
+        </div>
+
+        <div id="countdown" class="hidden emo-font">3</div>
+
+        <div class="track w-[95%]">
+            <div class="start-line"></div>
+            <div class="finish-line"></div>
+            <div class="lane"><span class="absolute left-1 md:left-2 font-bold text-red-600/50 z-0 text-lg md:text-xl">1</span><div id="horse-1" class="horse">🐎</div></div>
+            <div class="lane"><span class="absolute left-1 md:left-2 font-bold text-red-600/50 z-0 text-lg md:text-xl">2</span><div id="horse-2" class="horse">🐎</div></div>
+            <div class="lane"><span class="absolute left-1 md:left-2 font-bold text-red-600/50 z-0 text-lg md:text-xl">3</span><div id="horse-3" class="horse">🐎</div></div>
+            <div class="lane"><span class="absolute left-1 md:left-2 font-bold text-red-600/50 z-0 text-lg md:text-xl">4</span><div id="horse-4" class="horse">🐎</div></div>
+        </div>
+
+        <!-- Overlay Hasil Balapan -->
+        <div id="g2-overlay" class="game-overlay border-2 border-red-900 w-[95%] max-w-[800px] mx-auto left-0 right-0">
+            <h2 id="g2-result-title" class="hero-title mb-4">Race Finished!</h2>
+            <p id="race-message" class="section-title mb-8"></p>
+            <button id="g2-btn-action" class="btn btn-green emo-font w-[90%] md:w-auto"></button>
+        </div>
+    </section>
+
+    <!-- Game 3: Find Johnny Joestar -->
+    <section id="screen-game3" class="screen flex flex-col items-center justify-center bg-[#050505] w-full">
+        <div class="mb-2 md:mb-4 text-center w-full px-2 z-20">
+            <h2 class="body-text font-bold text-gray-500 tracking-widest uppercase mb-1" id="g3-subtitle">One more mission</h2>
+            <h1 class="hero-title text-red-700 drop-shadow-md" id="g3-title">Find Johnny Joestar</h1>
+            <p class="body-text text-gray-400 font-medium mt-1" id="g3-desc">He's somewhere in the desert.</p>
+        </div>
+
+        <div class="emo-font text-gray-500 text-lg md:text-xl mb-2 z-20">LEVEL <span id="g3-level-text" class="text-red-600">1</span> / 3</div>
+
+        <div id="g3-arena-container" class="g3-arena w-[95%]" onclick="missJohnny(event)">
+            <div class="desert-grain"></div>
+            <div class="g3-vignette"></div>
+            <!-- Elemen Gurun & Johnny akan di-inject via JS -->
+            <div id="g3-objects-layer" class="absolute inset-0 pointer-events-none"></div>
+            
+            <!-- Overlay Transisi Level Game 3 -->
+            <div id="g3-overlay" class="game-overlay z-30">
+                <h2 id="g3-result-title" class="hero-title mb-2 text-purple-500">You found him.</h2>
+                <p id="g3-result-msg" class="body-text text-gray-300 mb-6 text-xl">But he's not here anymore.</p>
+                <button id="g3-btn-next" class="btn btn-green emo-font" onclick="nextJohnnyLevel()">Continue ➡</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Birthday Code Screen -->
+    <section id="screen-code" class="screen flex flex-col items-center justify-center px-4 bg-black text-center w-full">
+        <h2 class="hero-title text-purple-500 mb-2 drop-shadow-md">Enter the password</h2>
+        <p class="body-text text-gray-500 mb-8 font-bold tracking-widest uppercase text-sm md:text-base">your birthday</p>
+        <div class="flex flex-col items-center gap-4 w-full">
+            <input type="text" id="bday-code-input" placeholder="DD-MM-YYYY" class="emo-font bg-gray-900 border-2 border-red-900 text-white text-center py-3 px-6 rounded focus:outline-none focus:border-purple-500 transition-colors shadow-[0_0_15px_rgba(153,27,27,0.4)]">
+            <p id="code-error" class="body-text text-red-500 h-6 opacity-0 transition-opacity">That's not it.</p>
+            <button class="btn emo-font mt-2 w-full max-w-[200px]" onclick="verifyCode()">Unlock</button>
+        </div>
+    </section>
+
+    <!-- Exhibition Screen -->
+    <section id="screen-exhibition" class="screen bg-black relative w-full hidden-scrollbar">
+        <!-- Confetti Background Layer -->
+        <canvas id="confetti" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+        <!-- Headers -->
+        <div class="w-full min-h-[90dvh] flex flex-col justify-center items-center text-center px-4 relative z-10">
+            <h1 class="hero-title text-red-700 drop-shadow-lg mb-4 fade-on-scroll">She's 17 years old right now.</h1>
+            <h2 class="section-title text-gray-400 fade-on-scroll" style="transition-delay: 0.5s;">Oh my God.</h2>
+            <div class="absolute bottom-10 fade-on-scroll" style="transition-delay: 1.5s;">
+                <p class="body-text text-gray-600 animate-bounce tracking-widest uppercase font-bold">Scroll down</p>
+            </div>
+        </div>
+        
+        <!-- Gallery -->
+        <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 flex flex-col gap-24 md:gap-32 pb-12 z-10 relative">
+            <!-- Photo 1 -->
+            <div class="flex flex-col md:flex-row items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
+                <div class="photo-frame" style="transform: rotate(-3deg);">
+                    <img src="assets/images/1.webp" alt="Memory 1" onerror="this.src='https://placehold.co/300x400/27272a/71717a?text=photo-1.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
+                </div>
+                <!-- <div class="text-center md:text-left max-w-sm px-2">
+                    <p class="section-title text-purple-400 mb-2">[NAMA]</p>
+                    <p class="body-text text-gray-400 font-medium tracking-wider mb-3">[TANGGAL LAHIR]</p>
+                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
+                </div> -->
+            </div>
+
+            <!-- Photo 2 (Reversed) -->
+            <div class="flex flex-col md:flex-row-reverse items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
+                <div class="photo-frame landscape" style="transform: rotate(4deg);">
+                    <img src="assets/images/2.webp" alt="Memory 2" onerror="this.src='https://placehold.co/400x300/27272a/71717a?text=photo-2.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
+                </div>
+                <!-- <div class="text-center md:text-right max-w-sm px-2">
+                    <p class="section-title text-red-600 mb-3">A chapter ends...</p>
+                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
+                </div> -->
+            </div>
+
+            <!-- Photo 3 -->
+            <div class="flex flex-col md:flex-row items-center justify-center md:justify-start gap-6 md:gap-10 fade-on-scroll">
+                <div class="photo-frame square" style="transform: rotate(-2deg);">
+                    <img src="assets/images/3.webp" alt="Memory 3" onerror="this.src='https://placehold.co/350x350/27272a/71717a?text=photo-3.jpg'" class="grayscale hover:grayscale-0 transition-all duration-500">
+                </div>
+                <!-- <div class="text-center md:text-left max-w-sm px-2 mt-2 md:mt-0">
+                    <p class="body-text text-gray-500 italic leading-relaxed">"[PESAN SINGKAT]"</p>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Personal Birthday Message Section -->
+        <div class="w-full max-w-3xl mx-auto px-6 py-20 pb-40 z-10 relative flex flex-col gap-8 text-center md:text-left">
+            <h1 class="hero-title text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.5)] mb-8 fade-on-scroll text-center" style="font-size: clamp(2rem, 6vw, 4rem);">
+                HAPPY SWEET SEVENTEEN AUREL.
+            </h1>
+            
+            <p class="body-text text-gray-300 leading-relaxed text-lg md:text-xl fade-on-scroll">
+                Selamat bertambah usia ya menjadi 17 tahun. Abis ini punya KTP dan sudah gede nih. Semoga semua yang kamu harapkan bisa segera terwujud, dan selalu diberikan rezeki yang melimpah serta selalu sehat nggak sakit sakit lagi dalam jadwal mu yang sibuk itu.
+            </p>
+            
+            <p class="body-text text-gray-300 leading-relaxed text-lg md:text-xl fade-on-scroll">
+                Melihat kamu berkembang dan berani keluar dari zona nyaman mu sangat sungguh buat bangga si, tapi aku harap sesibuk sibuknya kegiatan yang nanti kamu jalani dan lakukan, kamu tetap mengutamakan dirimu sendiri ya, agar tidak tumbang atau jatuh sakit kedepannya. Okey ?
+            </p>
+
+            <p class="body-text text-gray-300 leading-relaxed text-lg md:text-xl fade-on-scroll">
+                Owh ya di umur yang ke 17, aku berharap kamu tidaklah selalu keras kepada dirimu sendiri, janganlah selalu menyalahkan dirimu sendiri dengan sesuatu yang ada. Tidak semuanya itu kesalahan mu. Aku berharap di tahun ini kamu mulai bisa merasakan kasih sayang yang tulus dan hangat yang selalu memelukmu, dan memberikan rasa aman, i hope the best for you btw, always, from here.
+            </p>
+
+            <p class="body-text text-gray-300 leading-relaxed text-lg md:text-xl fade-on-scroll">
+                Aku tidak akan pernah capek juga mengucapkan terima kasih sudah membawakan banyak sekali warna itu kembali kepada ku. Aku gatau harus mengucapkan nya seperti apa. Maaf ya jika ada perbuatan ku yang buat kamu marah, atau kesal aku minta maaf.
+            </p>
+
+            <p class="section-title text-purple-400 mt-6 fade-on-scroll text-center italic">
+                "HAPPY SWEET SEVENTEEN FOR YOU AUREL"
+            </p>
+
+            <p class="hero-title text-red-500 mt-12 mb-20 fade-on-scroll text-center drop-shadow-md" style="font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.3;">
+                You are the happiest, the most beautiful, the smartest—you’re everything to me.
+            </p>
+
+            <div class="flex justify-center mt-10 fade-on-scroll">
+                <button class="btn emo-font text-sm" onclick="location.reload()">Replay Experience 🔄</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Global Audio & Music Toggle -->
+    <audio id="bg-song-1" src="assets/audio/song-01.mp3" loop preload="auto"></audio>
+    <audio id="bg-song-2" src="assets/audio/song-02.mp3" loop preload="auto"></audio>
+    <button id="global-music-toggle" class="text-2xl" onclick="toggleMainMusic()">🔊</button>
+
+    <script>
+        // --- Navigation ---
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // --- Audio Engine (Web Audio API) ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type, duration, vol=1) {
+            try {
+                if(!audioCtx) initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                // Attack and release to avoid clicking sounds
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime + duration - 0.05);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.log("Audio not ready"); }
+        }
+
+        function playSound(type) {
+            switch(type) {
+                case 'shoot': playTone(300, 'triangle', 0.2, 0.5); break;
+                case 'hit-small': playTone(800, 'sine', 0.1, 0.8); playTone(1200, 'sine', 0.2, 0.8); break;
+                case 'hit-med': playTone(600, 'sine', 0.1, 0.8); playTone(900, 'sine', 0.2, 0.8); break;
+                case 'hit-large': playTone(400, 'square', 0.1, 0.8); playTone(600, 'square', 0.2, 0.8); break;
+                case 'bounce': playTone(200, 'sine', 0.1, 0.3); break;
+                case 'win': playTone(523.25, 'sine', 0.2); setTimeout(()=>playTone(659.25, 'sine', 0.2), 200); setTimeout(()=>playTone(783.99, 'sine', 0.4), 400); break;
+                case 'lose': playTone(300, 'sawtooth', 0.4); setTimeout(()=>playTone(250, 'sawtooth', 0.6), 400); break;
+            }
+        }
+
+        // --- GAME 1: Steel Ball Physics ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game1-container');
+        
+        let g1Loop;
+        let cWidth, cHeight;
+        
+        // Konstanta Fisika
+        const GRAVITY = 0.35; // Lebih ringan (sebelumnya 0.4)
+        const FRICTION_GROUND = 0.95;
+        const FRICTION_AIR = 0.99;
+        const BOUNCE_DAMPING = 0.7;
+        const DRAG_MULTIPLIER = 0.25; // Tenaga lemparan ditambah drastis (sebelumnya 0.18)
+        const MAX_DRAG = 200; // Tarikan bisa lebih panjang ke belakang (sebelumnya 150)
+
+        // State Game
+        let score = 0;
+        let targetScore = 150; // Target diturunkan agar lebih mudah menang
+        let throwsLeft = 7; // Kesempatan lempar ditambah
+        let isGame1Active = false;
+
+        // Entitas
+        let ball = {
+            x: 0, y: 0, r: 25, vx: 0, vy: 0, // Ukuran bola diperbesar (sebelumnya 20)
+            state: 'idle', // idle, dragging, flying
+            startX: 0, startY: 0, // Posisi awal drag
+            currX: 0, currY: 0  // Posisi kursor saat drag
+        };
+        let targets = [];
+        let particles = [];
+        let popups = []; // Skor melayang
+        let trails = []; // Efek motion trail
+
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            cWidth = canvas.width;
+            cHeight = canvas.height;
+            
+            // Posisi awal bola agak di atas agar mudah ditarik ke bawah (Slingshot)
+            if(ball.state === 'idle') {
+                ball.x = cWidth / 2;
+                ball.y = cHeight - 120;
+                ball.vx = 0; ball.vy = 0;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function initTargets() {
+            targets = [];
+            // Target Kecil (Cepat, Poin Besar) - Emo Theme Colors
+            targets.push({ x: cWidth*0.2, y: cHeight*0.2, r: 15, points: 100, color: '#dc2626', speed: 2, dir: 1, type: 'small' }); // Crimson
+            // Target Sedang
+            targets.push({ x: cWidth*0.5, y: cHeight*0.4, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: -1, type: 'med' }); // Purple
+            targets.push({ x: cWidth*0.8, y: cHeight*0.3, r: 25, points: 50, color: '#7e22ce', speed: 1.5, dir: 1, type: 'med' }); // Purple
+            // Target Besar (Lambat, Poin Kecil)
+            targets.push({ x: cWidth*0.3, y: cHeight*0.6, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: 1, type: 'large' }); // Dark Gray
+            targets.push({ x: cWidth*0.7, y: cHeight*0.7, r: 40, points: 25, color: '#3f3f46', speed: 0.8, dir: -1, type: 'large' }); // Dark Gray
+        }
+
+        // function startGame1() {
+        //     initAudio();
+        //     switchScreen('screen-game1');
+        //     resetGame1();
+        // }
+
+        function startGame1() {
+            initAudio();
+
+            playAudioWithFadeIn('bg-song-1');
+
+            switchScreen('screen-game1');
+            resetGame1();
+        }
+
+
+        function resetGame1() {
+            document.getElementById('g1-overlay').classList.remove('active');
+            document.getElementById('g1-btn-next').classList.add('hidden');
+            document.getElementById('g1-btn-retry').classList.add('hidden');
+            
+            resizeCanvas();
+            score = 0;
+            throwsLeft = 7;
+            updateHUD();
+            initTargets();
+            particles = [];
+            popups = [];
+            trails = [];
+            ball.state = 'idle';
+            ball.x = cWidth / 2;
+            ball.y = cHeight - 120;
+            ball.vx = 0; ball.vy = 0;
+            
+            isGame1Active = true;
+            if(!g1Loop) loopGame1();
+        }
+
+        function updateHUD() {
+            document.getElementById('ui-throws').innerText = throwsLeft;
+            document.getElementById('ui-score').innerText = score;
+        }
+
+        // --- Input Handling ---
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Handle touch or mouse
+            let clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            let clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function onPointerDown(e) {
+            if (!isGame1Active || ball.state === 'flying') return;
+            e.preventDefault();
+            
+            const pos = getMousePos(e);
+            // Cek apakah klik di area bola (berikan toleransi area lebih besar sedikit untuk touch)
+            const dx = pos.x - ball.x;
+            const dy = pos.y - ball.y;
+            if (Math.sqrt(dx*dx + dy*dy) < ball.r * 2) {
+                ball.state = 'dragging';
+                ball.startX = ball.x;
+                ball.startY = ball.y;
+                ball.currX = pos.x;
+                ball.currY = pos.y;
+            }
+        }
+
+        function onPointerMove(e) {
+            if (ball.state !== 'dragging') return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            // Batasi panjang drag
+            let dx = pos.x - ball.startX;
+            let dy = pos.y - ball.startY;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist > MAX_DRAG) {
+                ball.currX = ball.startX + (dx / dist) * MAX_DRAG;
+                ball.currY = ball.startY + (dy / dist) * MAX_DRAG;
+            } else {
+                ball.currX = pos.x;
+                ball.currY = pos.y;
+            }
+        }
+
+        function onPointerUp(e) {
+            if (ball.state !== 'dragging') return;
+            e.preventDefault();
+            
+            // Hitung vector lemparan (kebalikan dari drag)
+            let dx = ball.startX - ball.currX;
+            let dy = ball.startY - ball.currY;
+            
+            // Cegah lemparan terlalu lemah
+            if (Math.sqrt(dx*dx + dy*dy) > 10) {
+                ball.vx = dx * DRAG_MULTIPLIER;
+                ball.vy = dy * DRAG_MULTIPLIER;
+                ball.state = 'flying';
+                throwsLeft--;
+                updateHUD();
+                playSound('shoot');
+            } else {
+                // Batal lempar
+                ball.state = 'idle';
+            }
+        }
+
+        canvas.addEventListener('mousedown', onPointerDown);
+        canvas.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp); // Tangkap di window agar tidak stuck
+        
+        canvas.addEventListener('touchstart', onPointerDown, {passive: false});
+        canvas.addEventListener('touchmove', onPointerMove, {passive: false});
+        window.addEventListener('touchend', onPointerUp);
+
+        // --- Main Game Loop 1 ---
+        function loopGame1() {
+            if (!isGame1Active) return;
+            
+            updatePhysics();
+            drawCanvas();
+            
+            checkGameState();
+            
+            g1Loop = requestAnimationFrame(loopGame1);
+        }
+
+        function updatePhysics() {
+            // Update Trails
+            if(ball.state === 'flying') {
+                if(Math.random() > 0.3) {
+                    trails.push({x: ball.x, y: ball.y, r: ball.r, alpha: 0.5});
+                }
+            }
+            // Kurangi alpha trail
+            for (let i = trails.length - 1; i >= 0; i--) {
+                trails[i].alpha -= 0.05;
+                if (trails[i].alpha <= 0) trails.splice(i, 1);
+            }
+
+            // Gerakkan Target
+            targets.forEach(t => {
+                t.x += t.speed * t.dir;
+                // Pantul target di dinding (dengan margin)
+                if(t.x < 50 || t.x > cWidth - 50) t.dir *= -1;
+            });
+
+            if (ball.state === 'flying') {
+                ball.vy += GRAVITY;
+                ball.vx *= FRICTION_AIR;
+                ball.vy *= FRICTION_AIR;
+                
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+
+                let bounced = false;
+
+                // Wall Collisions
+                if (ball.x + ball.r > cWidth) { ball.x = cWidth - ball.r; ball.vx *= -BOUNCE_DAMPING; bounced = true; }
+                if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -BOUNCE_DAMPING; bounced = true; }
+                if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy *= -BOUNCE_DAMPING; bounced = true; }
+                
+                // Ground Collision
+                if (ball.y + ball.r > cHeight) {
+                    ball.y = cHeight - ball.r;
+                    ball.vy *= -BOUNCE_DAMPING;
+                    ball.vx *= FRICTION_GROUND;
+                    if(Math.abs(ball.vy) > 1) bounced = true;
+                }
+
+                if (bounced && Math.abs(ball.vy) > 2) playSound('bounce');
+
+                // Target Collisions
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    let t = targets[i];
+                    let dx = ball.x - t.x;
+                    let dy = ball.y - t.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < ball.r + t.r) {
+                        // Kena Target!
+                        score += t.points;
+                        updateHUD();
+                        createParticles(t.x, t.y, t.color);
+                        createPopup(t.x, t.y, `+${t.points}`);
+                        
+                        // Efek suara & getaran
+                        if(t.type === 'small') playSound('hit-small');
+                        else if(t.type === 'med') playSound('hit-med');
+                        else { 
+                            playSound('hit-large');
+                            container.classList.add('shake-effect');
+                            setTimeout(() => container.classList.remove('shake-effect'), 400);
+                        }
+
+                        // Pantulkan bola
+                        let normalX = dx / dist;
+                        let normalY = dy / dist;
+                        let dot = ball.vx * normalX + ball.vy * normalY;
+                        ball.vx -= 2 * dot * normalX;
+                        ball.vy -= 2 * dot * normalY;
+                        ball.vx += (Math.random()-0.5) * 5; // Extra chaos
+
+                        targets.splice(i, 1); // Hapus target
+                    }
+                }
+
+                // Berhenti (mencegah micro-bouncing karena gravitasi terus ditambah)
+                if (Math.abs(ball.vx) < 0.5 && Math.abs(ball.vy) <= GRAVITY * 1.5 && ball.y + ball.r >= cHeight - 2) {
+                    ball.state = 'idle';
+                    ball.vx = 0;
+                    ball.vy = 0;
+                    // Reset posisi agak ke atas lagi untuk lemparan berikutnya
+                    ball.x = cWidth / 2;
+                    ball.y = cHeight - 120;
+                    trails = [];
+                }
+            }
+
+            // Update Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Update Popups
+            for (let i = popups.length - 1; i >= 0; i--) {
+                let p = popups[i];
+                p.y -= 1; p.alpha -= 0.02;
+                if (p.alpha <= 0) popups.splice(i, 1);
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, cWidth, cHeight);
+
+            // Gambar Trails (Abu-abu gelap ke merah)
+            trails.forEach(t => {
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.r * 0.8, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(153, 27, 27, ${t.alpha})`;
+                ctx.fill();
+            });
+
+            // Gambar Target
+            targets.forEach(t => {
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+                
+                let gradient = ctx.createRadialGradient(t.x, t.y, t.r*0.1, t.x, t.y, t.r);
+                gradient.addColorStop(0, '#52525b');
+                gradient.addColorStop(0.5, t.color);
+                gradient.addColorStop(1, '#000');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Cincin dalam
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.r * 0.6, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Nilai
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold ' + (t.r*0.6) + 'px Permanent Marker';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(t.points, t.x, t.y);
+            });
+
+            // GAMBAR BOLA MENGGUNAKAN PNG
+            ctx.save();
+            ctx.translate(ball.x, ball.y);
+            // Rotasi jika bola terbang
+            if(ball.state === 'flying') {
+                let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+                ctx.rotate(Date.now() / 100 * speed * 0.1 * (ball.vx > 0 ? 1 : -1));
+            }
+
+            // Ambil elemen gambar PNG
+            const ballImg = document.getElementById('ball-img');
+            
+            // Cek apakah gambar berhasil dimuat. Jika ya, gambar PNG-nya.
+            if(ballImg && ballImg.complete && ballImg.naturalWidth > 0) {
+                // Gambar menengahi koordinat x, y (yang sekarang menjadi 0,0 karena di-translate)
+                ctx.drawImage(ballImg, -ball.r, -ball.r, ball.r * 2, ball.r * 2);
+            } else {
+                // Fallback (jika gambar gagal/belum dimuat) akan menggambar lingkaran merah gelap
+                ctx.beginPath();
+                ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
+                ctx.fillStyle = '#7f1d1d'; 
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Gambar Trajectory / Garis Tarikan
+            if (ball.state === 'dragging') {
+                let dx = ball.startX - ball.currX;
+                let dy = ball.startY - ball.currY;
+                
+                ctx.beginPath();
+                ctx.moveTo(ball.startX, ball.startY);
+                ctx.lineTo(ball.currX, ball.currY);
+                ctx.strokeStyle = 'rgba(153, 27, 27, 0.7)'; // Merah gelap
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.setLineDash([5, 10]);
+                let simX = ball.startX;
+                let simY = ball.startY;
+                let simVx = dx * DRAG_MULTIPLIER;
+                let simVy = dy * DRAG_MULTIPLIER;
+                
+                ctx.moveTo(simX, simY);
+                for(let i=0; i<30; i++) {
+                    simVy += GRAVITY;
+                    simX += simVx;
+                    simY += simVy;
+                    ctx.lineTo(simX, simY);
+                }
+                ctx.strokeStyle = 'rgba(126, 34, 206, 0.7)'; // Garis prediksi ungu
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Gambar Particles
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            // Gambar Popups
+            popups.forEach(p => {
+                ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`; // Ungu terang
+                ctx.font = 'bold 24px Permanent Marker';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = `rgba(0, 0, 0, ${p.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.strokeText(p.text, p.x, p.y);
+                ctx.fillText(p.text, p.x, p.y);
+            });
+        }
+
+        // Helpers untuk visual efek Game 1
+        function createParticles(x, y, color) {
+            for(let i=0; i<15; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random()-0.5)*10,
+                    vy: (Math.random()-0.5)*10,
+                    r: Math.random()*4 + 2,
+                    color: color,
+                    alpha: 1
+                });
+            }
+        }
+        function createPopup(x, y, text) {
+            popups.push({ x: x, y: y, text: text, alpha: 1 });
+        }
+
+        function checkGameState() {
+            // Cek kondisi menang/kalah hanya saat bola diam
+            if (ball.state === 'idle') {
+                if (score >= targetScore) {
+                    endGame1(true);
+                } else if (throwsLeft <= 0) {
+                    endGame1(false);
+                }
+            }
+        }
+
+        function endGame1(win) {
+            isGame1Active = false;
+            cancelAnimationFrame(g1Loop);
+            
+            const overlay = document.getElementById('g1-overlay');
+            const title = document.getElementById('g1-result-title');
+            const msg = document.getElementById('g1-result-msg');
+            const btnNext = document.getElementById('g1-btn-next');
+            const btnRetry = document.getElementById('g1-btn-retry');
+
+            overlay.classList.add('active');
+            
+            if (win) {
+                title.innerText = "Target Eliminated.";
+                title.className = "text-5xl emo-font mb-2 text-purple-500 drop-shadow-md";
+                msg.innerText = `Kamu mengumpulkan ${score} poin!`;
+                btnNext.classList.remove('hidden');
+                playSound('win');
+            } else {
+                title.innerText = "Game Over.";
+                title.className = "text-5xl emo-font mb-2 text-red-600 drop-shadow-md";
+                msg.innerText = `Skor akhirmu: ${score}/${targetScore}. Lemah.`;
+                btnRetry.classList.remove('hidden');
+                playSound('lose');
+            }
+        }
+
+        // --- GAME 2: Horse Race ---
+        let selectedHorse = 0;
+        let horses = [];
+        let isRacing = false;
+        let g2Loop;
+
+        function initGame2() {
+            switchScreen('screen-game2');
+            document.getElementById('g2-overlay').classList.remove('active');
+            document.getElementById('g2-setup').classList.remove('hidden');
+            
+            // Reset kuda
+            for(let i=1; i<=4; i++) {
+                const h = document.getElementById(`horse-${i}`);
+                h.style.left = '5%';
+                h.classList.remove('running');
+            }
+            selectedHorse = 0;
+            document.querySelectorAll('.horse-select-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('btn-start-race').classList.add('hidden');
+        }
+
+        function selectHorse(num) {
+            if (isRacing) return;
+            selectedHorse = num;
+            document.querySelectorAll('.horse-select-btn').forEach((btn, index) => {
+                if (index + 1 === num) btn.classList.add('selected');
+                else btn.classList.remove('selected');
+            });
+            document.getElementById('btn-start-race').classList.remove('hidden');
+            playTone(400, 'square', 0.1);
+        }
+
+        function startRace() {
+            isRacing = true;
+            document.getElementById('g2-setup').classList.add('hidden');
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.classList.remove('hidden');
+            
+            let count = 3;
+            countdownEl.innerText = count;
+            countdownEl.style.color = '#ef4444';
+            playTone(400, 'square', 0.2);
+            
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownEl.innerText = count;
+                    playTone(400, 'square', 0.2);
+                } else if (count === 0) {
+                    countdownEl.innerText = 'GO!';
+                    countdownEl.style.color = '#22c55e';
+                    playTone(800, 'square', 0.4);
+                } else {
+                    clearInterval(countInterval);
+                    countdownEl.classList.add('hidden');
+                    runRace();
+                }
+            }, 1000);
+        }
+
+        function runRace() {
+            let positions = [5, 5, 5, 5];
+            // Kuda memiliki batas kecepatan (variasi)
+            let baseSpeeds = [
+                Math.random()*0.2 + 0.1,
+                Math.random()*0.2 + 0.1,
+                Math.random()*0.2 + 0.1,
+                Math.random()*0.2 + 0.1
+            ];
+            
+            // CHEAT HALUS: Memberikan sedikit kecepatan tambahan pada kuda pilihan pemain
+            // Agar peluang menang lebih besar (tidak bikin frustrasi)
+            if (selectedHorse >= 1 && selectedHorse <= 4) {
+                baseSpeeds[selectedHorse - 1] += 0.08; 
+            }
+            
+            const finishLine = 83; // persentase left css
+            
+            horses = [
+                document.getElementById('horse-1'),
+                document.getElementById('horse-2'),
+                document.getElementById('horse-3'),
+                document.getElementById('horse-4')
+            ];
+
+            horses.forEach(h => h.classList.add('running'));
+
+            function frame() {
+                if (!isRacing) return;
+                
+                // Debu acak
+                if (Math.random() < 0.3) createG2Dust(positions);
+
+                let winner = -1;
+                for (let i = 0; i < 4; i++) {
+                    // Dinamika kecepatan
+                    let currentSpeed = baseSpeeds[i] + (Math.random() * 0.15 - 0.05); // Kadang ngebut, kadang lambat
+                    if (currentSpeed < 0.05) currentSpeed = 0.05;
+                    
+                    positions[i] += currentSpeed;
+                    horses[i].style.left = positions[i] + '%';
+                    
+                    if (positions[i] >= finishLine) {
+                        winner = i + 1;
+                        break;
+                    }
+                }
+
+                if (winner !== -1) {
+                    endRace(winner);
+                } else {
+                    g2Loop = requestAnimationFrame(frame);
+                }
+            }
+            g2Loop = requestAnimationFrame(frame);
+        }
+
+        function createG2Dust(positions) {
+            const track = document.querySelector('.track');
+            const trackRect = track.getBoundingClientRect();
+            const lanes = document.querySelectorAll('.lane');
+            
+            for(let i=0; i<4; i++) {
+                if(Math.random() > 0.7) {
+                    const dust = document.createElement('div');
+                    dust.className = 'dust-g2';
+                    
+                    const laneRect = lanes[i].getBoundingClientRect();
+                    // Relatif terhadap track
+                    dust.style.left = ((trackRect.width * positions[i] / 100) - 40) + 'px';
+                    dust.style.top = ((laneRect.top - trackRect.top) + laneRect.height/2 + 10) + 'px';
+                    
+                    track.appendChild(dust);
+                    setTimeout(() => { if(dust.parentNode) dust.remove(); }, 600);
+                }
+            }
+        }
+
+        function endRace(winner) {
+            isRacing = false;
+            horses.forEach(h => h.classList.remove('running'));
+            
+            const overlay = document.getElementById('g2-overlay');
+            const msgEl = document.getElementById('race-message');
+            const titleEl = document.getElementById('g2-result-title');
+            const actionBtn = document.getElementById('g2-btn-action');
+            
+            if (winner === selectedHorse) {
+                titleEl.innerText = "Victory.";
+                titleEl.className = "text-5xl emo-font mb-4 text-green-500 drop-shadow-md";
+                msgEl.innerText = `Petarung no. ${winner} selamat. 🏆`;
+                msgEl.className = "text-3xl font-bold mb-8 emo-font text-gray-300";
+                
+                actionBtn.innerText = "Continue ➡";
+                // DIUBAH: Melanjutkan ke Game 3 (Johnny) bukan langsung ke Code
+                actionBtn.onclick = startJohnnyGame; 
+                playSound('win');
+            } else {
+                titleEl.innerText = "You Lose.";
+                msgEl.innerText = `Petarung no. ${winner} menang. Jagoanmu tewas di lintasan!`;
+                msgEl.className = "text-2xl font-bold mb-8 emo-font text-red-400";
+                
+                actionBtn.innerText = "Coba Balapan Lagi 🔄";
+                actionBtn.onclick = retryRace;
+                playSound('lose');
+            }
+            
+            setTimeout(() => {
+                overlay.classList.add('active');
+            }, 500);
+        }
+
+        function retryRace() {
+            document.getElementById('g2-overlay').classList.remove('active');
+            initGame2(); // Mengulang ke pemilihan kuda
+        }
+
+        // --- GAME 3: FIND JOHNNY JOESTAR ---
+        let johnnyLevel = 1;
+        
+        function startJohnnyGame() {
+            johnnyLevel = 1;
+            switchScreen('screen-game3');
+            initJohnnyLevel();
+        }
+
+        function initJohnnyLevel() {
+            document.getElementById('g3-overlay').classList.remove('active');
+            document.getElementById('g3-level-text').innerText = johnnyLevel;
+            
+            const objLayer = document.getElementById('g3-objects-layer');
+            const arena = document.getElementById('g3-arena-container');
+            objLayer.innerHTML = ''; // Bersihkan arena
+            
+            // Konfigurasi Level
+            let numFakeObjects = 10;
+            if (johnnyLevel === 2) numFakeObjects = 25;
+            if (johnnyLevel === 3) numFakeObjects = 45;
+
+            // Update Teks Instruksi
+            const title = document.getElementById('g3-title');
+            const subtitle = document.getElementById('g3-subtitle');
+            const desc = document.getElementById('g3-desc');
+            
+            if(johnnyLevel === 1) {
+                subtitle.innerText = "One more mission";
+                title.innerText = "Find Johnny Joestar";
+                desc.innerText = "He's somewhere in the desert.";
+            } else if (johnnyLevel === 2) {
+                subtitle.innerText = "Deeper into the desert";
+                title.innerText = "He moved.";
+                desc.innerText = "Look closer.";
+            } else {
+                subtitle.innerText = "One last time";
+                title.innerText = "Find Johnny";
+                desc.innerText = "This is the final search.";
+            }
+
+            // Generate Fake Objects (Batu, Kaktus, Pasir)
+            const desertItems = ['🪨', '🌵', '🏜️', '🦴'];
+            for(let i=0; i<numFakeObjects; i++) {
+                const el = document.createElement('div');
+                el.className = 'g3-obj';
+                el.innerText = desertItems[Math.floor(Math.random() * desertItems.length)];
+                
+                // Posisi Acak
+                el.style.left = (Math.random() * 85) + '%';
+                el.style.top = (Math.random() * 80) + '%';
+                
+                // Variasi Ukuran & Rotasi
+                const scale = (Math.random() * 0.5) + 0.5;
+                const rot = (Math.random() * 40) - 20;
+                el.style.transform = `scale(${scale}) rotate(${rot}deg)`;
+                
+                objLayer.appendChild(el);
+            }
+
+            // Spawn Johnny
+            const johnny = document.createElement('img');
+            johnny.className = 'g3-johnny';
+            // PERBAIKAN: Typo 'ohnny' diubah jadi 'johnny' dan menghapus slash (/) di awal path
+            johnny.src = `assets/images/j-${johnnyLevel}.png`;
+            johnny.alt = "Johnny Joestar";
+            johnny.onerror = function() { this.src = `https://placehold.co/60x60/27272a/7e22ce.png?text=JOHNNY+${johnnyLevel}`; };
+            
+            // Posisi Johnny
+            johnny.style.left = (Math.random() * 85 + 5) + '%';
+            johnny.style.top = (Math.random() * 80 + 5) + '%';
+            
+            // Tambahkan event click spesifik untuk Johnny
+            johnny.onclick = function(e) {
+                e.stopPropagation(); // Cegah event klik tembus ke arena (miss)
+                foundJohnny();
+            };
+            
+            // Sisipkan Johnny secara acak di antara objek lain (di dalam DOM)
+            arena.appendChild(johnny);
+        }
+
+        function missJohnny(e) {
+            // Animasi visual feedback jika salah klik area
+            const arena = document.getElementById('g3-arena-container');
+            arena.classList.remove('miss-shake');
+            void arena.offsetWidth; // Trigger reflow
+            arena.classList.add('miss-shake');
+            playTone(200, 'sawtooth', 0.1, 0.2); // Efek suara error kecil
+        }
+
+        function foundJohnny() {
+            playSound('win');
+            const overlay = document.getElementById('g3-overlay');
+            const titleEl = document.getElementById('g3-result-title');
+            const msgEl = document.getElementById('g3-result-msg');
+            const btnEl = document.getElementById('g3-btn-next');
+            
+            if (johnnyLevel < 3) {
+                titleEl.innerText = "You found him.";
+                titleEl.className = "hero-title mb-2 text-purple-500 drop-shadow-md";
+                msgEl.innerText = "But he's not here anymore.";
+                btnEl.innerText = "Continue ➡";
+            } else {
+                titleEl.innerText = "Mission Complete.";
+                titleEl.className = "hero-title mb-2 text-green-500 drop-shadow-md";
+                msgEl.innerText = "You finally caught him.";
+                btnEl.innerText = "Enter The Gate ➡";
+            }
+            
+            overlay.classList.add('active');
+        }
+
+        function nextJohnnyLevel() {
+            // Bersihkan elemen Johnny sebelumnya agar tidak tertumpuk
+            const oldJohnny = document.querySelector('.g3-johnny');
+            if(oldJohnny) oldJohnny.remove();
+
+            if (johnnyLevel < 3) {
+                johnnyLevel++;
+                initJohnnyLevel();
+            } else {
+                startCodeScreen();
+            }
+        }
+
+        // --- Alur Baru: Code, Music & Exhibition ---
+        // function startCodeScreen() {
+        //     switchScreen('screen-code');
+        //     playTone(300, 'sine', 0.5);
+        //     // Reset input form
+        //     document.getElementById('bday-code-input').value = '';
+        //     document.getElementById('bday-code-input').style.borderColor = '#7f1d1d';
+        //     document.getElementById('bday-code-input').style.color = 'white';
+        //     document.getElementById('code-error').style.opacity = '0';
+            
+        //     // Start lagu pertama saat masuk ke halaman password
+        //     playAudioWithFadeIn('bg-song-1');
+        // }
+
+function startCodeScreen() {
+    switchScreen('screen-code');
+    playTone(300, 'sine', 0.5);
+
+    // Reset input form
+    document.getElementById('bday-code-input').value = '';
+    document.getElementById('bday-code-input').style.borderColor = '#7f1d1d';
+    document.getElementById('bday-code-input').style.color = 'white';
+    document.getElementById('code-error').style.opacity = '0';
+
+    // song-01.mp3 tetap berjalan
+    // Tidak perlu playAudioWithFadeIn() lagi di sini
+}
+
+
+
+        function verifyCode() {
+            const input = document.getElementById('bday-code-input').value.trim();
+            const errorEl = document.getElementById('code-error');
+            
+            if (input === '28-10-2009') {
+                errorEl.style.opacity = '0';
+                playSound('win');
+                
+                // Efek sukses pada input
+                document.getElementById('bday-code-input').style.borderColor = '#22c55e';
+                document.getElementById('bday-code-input').style.color = '#22c55e';
+                
+                // Pindah musik secara halus ke lagu kedua
+                crossfadeAudio('bg-song-1', 'bg-song-2');
+                
+                setTimeout(() => {
+                    startExhibition();
+                }, 1000);
+            } else {
+                playSound('lose');
+                errorEl.style.opacity = '1';
+                // Getar input
+                const inputEl = document.getElementById('bday-code-input');
+                inputEl.classList.add('shake-effect');
+                setTimeout(() => inputEl.classList.remove('shake-effect'), 400);
+            }
+        }
+
+        let isMainMusicPlaying = false;
+        let activeAudioId = null;
+
+        function playAudioWithFadeIn(audioId) {
+            const audio = document.getElementById(audioId);
+            if(!audio) return;
+            
+            activeAudioId = audioId;
+            audio.volume = 0; // Mulai dari 0 untuk efek fade
+            
+            const musicBtn = document.getElementById('global-music-toggle');
+            musicBtn.style.display = 'block';
+
+            let playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    isMainMusicPlaying = true;
+                    musicBtn.innerHTML = '🔊';
+                    
+                    // Fade In perlahan
+                    let vol = 0;
+                    const fadeIn = setInterval(() => {
+                        vol += 0.05;
+                        if (vol >= 0.6) {
+                            clearInterval(fadeIn);
+                            audio.volume = 0.6; // Batas volume maksimal 0.6
+                        } else {
+                            audio.volume = vol;
+                        }
+                    }, 100);
+                }).catch(error => {
+                    isMainMusicPlaying = false;
+                    musicBtn.innerHTML = '🔇';
+                });
+            }
+        }
+
+        function crossfadeAudio(oldId, newId) {
+            const oldAudio = document.getElementById(oldId);
+            const newAudio = document.getElementById(newId);
+            activeAudioId = newId;
+
+            const musicBtn = document.getElementById('global-music-toggle');
+
+            // Fade out lagu pertama dan hentikan
+            if(oldAudio) {
+                let oldVol = oldAudio.volume;
+                const fadeOut = setInterval(() => {
+                    oldVol -= 0.05;
+                    if(oldVol <= 0) {
+                        clearInterval(fadeOut);
+                        oldAudio.pause();
+                        oldAudio.currentTime = 0;
+                    } else {
+                        oldAudio.volume = oldVol;
+                    }
+                }, 80);
+            }
+
+            // Langsung mainkan dan fade in lagu kedua karena sudah ada user action
+            if(newAudio) {
+                newAudio.volume = 0;
+                let playPromise = newAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        isMainMusicPlaying = true;
+                        musicBtn.innerHTML = '🔊';
+                        let newVol = 0;
+                        const fadeIn = setInterval(() => {
+                            newVol += 0.05;
+                            if(newVol >= 0.6) {
+                                clearInterval(fadeIn);
+                                newAudio.volume = 0.6;
+                            } else {
+                                newAudio.volume = newVol;
+                            }
+                        }, 80);
+                    }).catch(error => {
+                        isMainMusicPlaying = false;
+                        musicBtn.innerHTML = '🔇';
+                    });
+                }
+            }
+        }
+
+        function startExhibition() {
+            switchScreen('screen-exhibition');
+            
+            // Musik (song-02.mp3) sudah ditangani dan dimainkan melalui crossfadeAudio 
+            // sehingga tidak akan terputus ketika transisi layar.
+            
+            // Mulai Confetti terus menerus
+            startConfetti();
+
+            // Inisialisasi efek animasi scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-on-scroll').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function toggleMainMusic() {
+            if (!activeAudioId) return;
+            const audio = document.getElementById(activeAudioId);
+            const btn = document.getElementById('global-music-toggle');
+            
+            if (isMainMusicPlaying) {
+                audio.pause();
+                btn.innerHTML = '🔇';
+                isMainMusicPlaying = false;
+            } else {
+                audio.play();
+                btn.innerHTML = '🔊';
+                isMainMusicPlaying = true;
+            }
+        }
+
+        // --- Confetti ---
+        const confCanvas = document.getElementById('confetti');
+        const confCtx = confCanvas.getContext('2d');
+        let confParticles = [];
+        let confettiActive = false;
+
+        function resizeConfetti() {
+            confCanvas.width = window.innerWidth;
+            confCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfetti);
+        resizeConfetti();
+
+        function startConfetti() {
+            confettiActive = true;
+            // Emo Colors Array: Hitam, Abu-abu gelap, Merah Darah, Ungu Tua, Silver
+            const emoColors = ['#000000', '#27272a', '#991b1b', '#7e22ce', '#a1a1aa', '#581c87'];
+            
+            // Turunkan jumlah particle agar tidak memberatkan browser saat scroll
+            for(let i=0; i<80; i++) {
+                confParticles.push({
+                    x: Math.random() * confCanvas.width,
+                    y: Math.random() * confCanvas.height - confCanvas.height,
+                    r: Math.random() * 6 + 4,
+                    dx: Math.random() * 2 - 1,
+                    dy: Math.random() * 3 + 1,
+                    color: emoColors[Math.floor(Math.random() * emoColors.length)], // Pilih warna emo secara acak
+                    tilt: Math.random() * 10,
+                    tiltAngle: 0,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05
+                });
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if(!confettiActive) return;
+            requestAnimationFrame(animateConfetti);
+            confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+            
+            confParticles.forEach((p, index) => {
+                p.tiltAngle += p.tiltAngleInc;
+                p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2 + p.dy;
+                p.x += Math.sin(p.tiltAngle) * 2;
+                
+                confCtx.beginPath();
+                confCtx.lineWidth = p.r;
+                confCtx.strokeStyle = p.color;
+                confCtx.moveTo(p.x + p.tilt + p.r, p.y);
+                confCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                confCtx.stroke();
+
+                if (p.y > confCanvas.height) {
+                    confParticles[index] = {
+                        ...p,
+                        x: Math.random() * confCanvas.width,
+                        y: -20,
+                        tilt: Math.floor(Math.random() * 10) - 10
+                    };
+                }
+            });
+        }
+    </script>
+</body>
+</html>
